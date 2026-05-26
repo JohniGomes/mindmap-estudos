@@ -1,55 +1,96 @@
-import { useEffect, useRef, useState } from 'react'
-import { Transformer } from 'markmap-lib'
-import { Markmap } from 'markmap-view'
-import type { INode } from 'markmap-common'
+import { useEffect, useState, useCallback } from 'react'
+import ReactFlow, {
+  Node, Edge, Background, Controls,
+  useNodesState, useEdgesState, ReactFlowProvider,
+} from 'reactflow'
+import 'reactflow/dist/style.css'
+import MindMapNode from './MindMapNode'
 import './MindMap.css'
 
+export interface MindMapNodeData {
+  id: string
+  label: string
+  category: string
+  children: MindMapNodeData[]
+}
+
 interface Props {
-  markdown: string
+  tree: MindMapNodeData
   topic: string
 }
 
-const transformer = new Transformer()
+const nodeTypes = { mindmapNode: MindMapNode }
 
-export default function MindMap({ markdown, topic }: Props) {
-  const svgRef = useRef<SVGSVGElement>(null)
-  const mmRef = useRef<Markmap | null>(null)
+const H_GAP = 270
+const V_GAP = 72
+
+function getSubtreeSize(node: MindMapNodeData): number {
+  if (node.children.length === 0) return 1
+  return node.children.reduce((s, c) => s + getSubtreeSize(c), 0)
+}
+
+function buildGraph(root: MindMapNodeData): { nodes: Node[]; edges: Edge[] } {
+  const nodes: Node[] = []
+  const edges: Edge[] = []
+
+  const COLORS: Record<string, string> = {
+    root: '#428072', definition: '#5c7a9e', pathophysiology: '#8b5c5c',
+    symptoms: '#9e7a3a', diagnosis: '#3a6e9e', treatment: '#3a8a5c',
+    nursing: '#9e3a6e', classification: '#6e3a9e', epidemiology: '#3a7a9e',
+    detail: '#9ca3af',
+  }
+
+  function place(node: MindMapNodeData, depth: number, yStart: number) {
+    const size = getSubtreeSize(node)
+    const y = yStart + (size * V_GAP) / 2
+    nodes.push({
+      id: node.id,
+      type: 'mindmapNode',
+      position: { x: depth * H_GAP, y: y - 20 },
+      data: { label: node.label, category: node.category },
+    })
+    let childY = yStart
+    for (const child of node.children) {
+      const childSize = getSubtreeSize(child)
+      const color = COLORS[child.category] ?? '#9ca3af'
+      edges.push({
+        id: `e-${node.id}-${child.id}`,
+        source: node.id,
+        target: child.id,
+        type: 'smoothstep',
+        style: { stroke: color, strokeWidth: 1.5, opacity: 0.55 },
+      })
+      place(child, depth + 1, childY)
+      childY += childSize * V_GAP
+    }
+  }
+
+  place(root, 0, 0)
+  return { nodes, edges }
+}
+
+function MindMapInner({ tree, topic }: Props) {
+  const [nodes, setNodes, onNodesChange] = useNodesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [rfInstance, setRfInstance] = useState<any>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (!svgRef.current) return
+    const { nodes: n, edges: e } = buildGraph(tree)
+    setNodes(n)
+    setEdges(e)
+    setTimeout(() => rfInstance?.fitView({ padding: 0.15 }), 50)
+  }, [tree])
 
-    const { root } = transformer.transform(markdown)
-
-    if (mmRef.current) {
-      mmRef.current.destroy()
-    }
-
-    mmRef.current = Markmap.create(svgRef.current, {
-      color: (node: INode) => {
-        const colors = [
-          '#ec4899', '#8b5cf6', '#3b82f6',
-          '#10b981', '#f59e0b', '#ef4444',
-          '#06b6d4', '#84cc16',
-        ]
-        return colors[(node.state?.depth ?? 0) % colors.length]
-      },
-      duration: 400,
-      maxWidth: 280,
-      paddingX: 16,
-    }, root)
-
-    return () => {
-      mmRef.current?.destroy()
-    }
-  }, [markdown])
-
-  function handleFit() {
-    mmRef.current?.fit()
-  }
+  const onInit = useCallback((instance: any) => {
+    setRfInstance(instance)
+    setTimeout(() => instance.fitView({ padding: 0.15 }), 50)
+  }, [])
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(markdown)
+    const flatten = (n: MindMapNodeData, d = 0): string =>
+      ['  '.repeat(d) + n.label, ...n.children.map(c => flatten(c, d + 1))].join('\n')
+    await navigator.clipboard.writeText(flatten(tree))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -58,22 +99,64 @@ export default function MindMap({ markdown, topic }: Props) {
     <div className="mindmap-wrapper">
       <div className="mindmap-toolbar">
         <div className="mindmap-topic">
-          <span className="mindmap-dot" />
+          <div className="mindmap-dot" />
           <span>{topic}</span>
         </div>
         <div className="mindmap-actions">
-          <button onClick={handleFit} title="Centralizar mapa">⊡ Centralizar</button>
-          <button onClick={handleCopy} title="Copiar Markdown">
-            {copied ? '✓ Copiado!' : '⎘ Copiar MD'}
-          </button>
+          <button onClick={() => rfInstance?.fitView({ padding: 0.15 })}>Centralizar</button>
+          <button onClick={handleCopy}>{copied ? 'Copiado!' : 'Copiar'}</button>
         </div>
       </div>
-      <div className="mindmap-hint">
-        Use o scroll para zoom · Arraste para mover · Clique nos nós para expandir/recolher
-      </div>
+      <div className="mindmap-hint">Scroll para zoom · Arraste para mover</div>
       <div className="mindmap-canvas">
-        <svg ref={svgRef} className="mindmap-svg" />
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          onInit={onInit}
+          fitView
+          minZoom={0.2}
+          maxZoom={2}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background color="#e8e7f0" gap={24} size={1} />
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </div>
+      <div className="mindmap-legend">
+        {[
+          { cat: 'definition', label: 'Definição' },
+          { cat: 'pathophysiology', label: 'Fisiopatologia' },
+          { cat: 'symptoms', label: 'Sintomas' },
+          { cat: 'diagnosis', label: 'Diagnóstico' },
+          { cat: 'treatment', label: 'Tratamento' },
+          { cat: 'nursing', label: 'Enfermagem' },
+          { cat: 'classification', label: 'Classificação' },
+          { cat: 'epidemiology', label: 'Epidemiologia' },
+        ].map(({ cat, label }) => {
+          const colors: Record<string, string> = {
+            definition: '#5c7a9e', pathophysiology: '#8b5c5c', symptoms: '#9e7a3a',
+            diagnosis: '#3a6e9e', treatment: '#3a8a5c', nursing: '#9e3a6e',
+            classification: '#6e3a9e', epidemiology: '#3a7a9e',
+          }
+          return (
+            <div key={cat} className="legend-item">
+              <span className="legend-dot" style={{ background: colors[cat] }} />
+              <span>{label}</span>
+            </div>
+          )
+        })}
       </div>
     </div>
+  )
+}
+
+export default function MindMap(props: Props) {
+  return (
+    <ReactFlowProvider>
+      <MindMapInner {...props} />
+    </ReactFlowProvider>
   )
 }

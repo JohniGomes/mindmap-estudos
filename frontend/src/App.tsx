@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Upload from './components/Upload'
-import MindMap from './components/MindMap'
+import MindMap, { MindMapNodeData } from './components/MindMap'
 import Summary from './components/Summary'
 import History from './components/History'
 import Chat from './components/Chat'
@@ -19,7 +19,7 @@ export interface SummaryData {
 
 export interface Result {
   id: string
-  mindmap: string
+  mindmap: MindMapNodeData
   summary: SummaryData
   files_processed: string[]
   created_at?: string
@@ -87,8 +87,12 @@ export default function App() {
     setView('mindmap')
   }
 
+  function flattenTree(node: MindMapNodeData, depth = 0): string {
+    return ['  '.repeat(depth) + node.label, ...node.children.map(c => flattenTree(c, depth + 1))].join('\n')
+  }
+
   const chatContext = result
-    ? `Tópico: ${result.summary.main_topic}\n\nPontos-chave:\n${result.summary.key_points.map(p => `- ${p}`).join('\n')}\n\nSeções:\n${result.summary.sections.map(s => `${s.title}:\n${s.points.map(p => `  - ${p}`).join('\n')}`).join('\n\n')}\n\nMapa mental:\n${result.mindmap}`
+    ? `Tópico: ${result.summary.main_topic}\n\nPontos-chave:\n${result.summary.key_points.map(p => `- ${p}`).join('\n')}\n\nSeções:\n${result.summary.sections.map(s => `${s.title}:\n${s.points.map(p => `  - ${p}`).join('\n')}`).join('\n\n')}\n\nMapa mental:\n${flattenTree(result.mindmap)}`
     : ''
 
   return (
@@ -148,7 +152,7 @@ export default function App() {
         {result && view !== 'history' && (
           <div className="result-layout">
             <div className="result-main">
-              {view === 'mindmap' && <MindMap markdown={result.mindmap} topic={result.summary.main_topic} />}
+              {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} />}
               {view === 'summary' && <Summary data={result.summary} files={result.files_processed} />}
             </div>
             <div className="chat-panel">

@@ -26,8 +26,7 @@
 }
 
 .mindmap-dot {
-  width: 7px;
-  height: 7px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   background: var(--accent);
   flex-shrink: 0;
@@ -48,7 +47,7 @@
 
 .mindmap-actions button:hover {
   background: var(--accent-light);
-  border-color: var(--border-accent);
+  border-color: var(--mint);
   color: var(--accent);
 }
 
@@ -64,10 +63,53 @@
 .mindmap-canvas {
   flex: 1;
   overflow: hidden;
-  position: relative;
 }
 
-.mindmap-svg {
-  width: 100%;
-  height: 100%;
+/* React Flow overrides */
+.react-flow__controls {
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
 }
+
+.react-flow__controls-button {
+  background: var(--bg-2) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--accent-light) !important;
+}
+
+.react-flow__controls-button svg { fill: currentColor; }
+
+/* Legend */
+.mindmap-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-2);
+  flex-shrink: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.legend-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Custom node class */
+.mm-node { transition: box-shadow 0.15s; }
+.mm-node:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; }

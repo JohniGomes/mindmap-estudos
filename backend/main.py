@@ -34,35 +34,58 @@ def get_supabase() -> Client:
 
 
 SYSTEM_PROMPT = """Você é um assistente especializado em criar materiais de estudo para estudantes de enfermagem.
-Sua tarefa é analisar o conteúdo de PDFs de aulas e slides de enfermagem e produzir:
+Analise o conteúdo de PDFs de aulas e slides e produza:
 
-1. Um mapa mental detalhado em formato Markdown hierárquico (compatível com markmap)
+1. Um mapa mental como árvore JSON com categorias visuais
 2. Um resumo estruturado com os principais tópicos
 
-REGRAS PARA O MAPA MENTAL:
-- Use headings Markdown: # para o tópico central, ## para ramos principais, ### para sub-ramos, #### para detalhes
-- Seja específico e use termos técnicos de enfermagem
-- Inclua: definições, classificações, fisiopatologia, sinais/sintomas, diagnóstico, tratamento, cuidados de enfermagem
-- Máximo 5 níveis de profundidade
-- Linguagem clara e objetiva
+CATEGORIAS DISPONÍVEIS para cada nó:
+- "root": tópico central (apenas o nó raiz)
+- "definition": definição, conceito, introdução
+- "pathophysiology": fisiopatologia, mecanismo, etiologia, causas
+- "symptoms": sinais, sintomas, manifestações clínicas
+- "diagnosis": diagnóstico, exames, critérios diagnósticos
+- "treatment": tratamento, medicamentos, conduta terapêutica
+- "nursing": cuidados de enfermagem, SAE, intervenções de enfermagem
+- "classification": classificação, tipos, formas, estágios
+- "epidemiology": epidemiologia, prevalência, fatores de risco
+- "detail": detalhes, sub-itens, informações complementares
 
-REGRAS PARA O RESUMO:
-- Identifique o tópico principal do material
-- Liste de 5 a 10 pontos-chave clínicos mais importantes
-- Organize por seções temáticas com bullet points
+REGRAS DO MAPA MENTAL:
+- Máximo 4 níveis de profundidade
+- IDs únicos: "root", "n1", "n1-1", "n1-2", "n2", "n2-1", etc.
+- Labels concisos (máx 8 palavras por nó)
+- Atribua a categoria mais específica possível a cada nó
+- Inclua todos os temas principais do material
+
+REGRAS DO RESUMO:
+- Identifique o tópico principal
+- Liste de 5 a 10 pontos-chave clínicos
+- Organize por seções temáticas
 - Foque nos aspectos mais cobrados em provas
 
 Retorne EXCLUSIVAMENTE um JSON válido no formato:
 {
-  "mindmap": "# Título\\n## Ramo 1\\n### Sub-ramo\\n...",
+  "mindmap": {
+    "id": "root",
+    "label": "Nome do Tópico Principal",
+    "category": "root",
+    "children": [
+      {
+        "id": "n1",
+        "label": "Nome do Ramo",
+        "category": "definition",
+        "children": [
+          { "id": "n1-1", "label": "Detalhe", "category": "detail", "children": [] }
+        ]
+      }
+    ]
+  },
   "summary": {
     "main_topic": "Nome do tópico principal",
-    "key_points": ["ponto 1", "ponto 2", ...],
+    "key_points": ["ponto 1", "ponto 2"],
     "sections": [
-      {
-        "title": "Título da seção",
-        "points": ["ponto A", "ponto B", ...]
-      }
+      { "title": "Título da seção", "points": ["ponto A", "ponto B"] }
     ]
   }
 }"""
@@ -72,7 +95,7 @@ MAX_PDF_BYTES = 30 * 1024 * 1024
 
 class ProcessResponse(BaseModel):
     id: str
-    mindmap: str
+    mindmap: dict
     summary: dict
     files_processed: list[str]
     created_at: str
@@ -132,12 +155,12 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail="Resposta da IA não é um JSON válido.")
 
-    # Salva no Supabase
+    # Salva no Supabase (mindmap serializado como string JSON)
     try:
         sb = get_supabase()
         row = sb.table("mindmaps").insert({
             "topic": result["summary"]["main_topic"],
-            "mindmap": result["mindmap"],
+            "mindmap": json.dumps(result["mindmap"], ensure_ascii=False),
             "summary": result["summary"],
             "files_processed": processed_names,
         }).execute()
@@ -159,6 +182,13 @@ def get_history():
     try:
         sb = get_supabase()
         rows = sb.table("mindmaps").select("*").order("created_at", desc=True).limit(30).execute()
+        # Desserializa mindmap de string para dict
+        for row in rows.data:
+            if isinstance(row.get("mindmap"), str):
+                try:
+                    row["mindmap"] = json.loads(row["mindmap"])
+                except Exception:
+                    row["mindmap"] = {"id": "root", "label": row.get("topic", ""), "category": "root", "children": []}
         return rows.data
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erro ao carregar histórico: {str(e)}")
