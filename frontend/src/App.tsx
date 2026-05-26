@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Upload from './components/Upload'
 import MindMap, { MindMapNodeData } from './components/MindMap'
 import Summary from './components/Summary'
+import Diagram from './components/Diagram'
 import History from './components/History'
 import Chat from './components/Chat'
 import './App.css'
@@ -20,12 +21,13 @@ export interface SummaryData {
 export interface Result {
   id: string
   mindmap: MindMapNodeData
+  diagram: string
   summary: SummaryData
   files_processed: string[]
   created_at?: string
 }
 
-type View = 'mindmap' | 'summary' | 'history'
+type View = 'mindmap' | 'diagram' | 'summary' | 'history'
 
 export default function App() {
   const [result, setResult] = useState<Result | null>(null)
@@ -113,6 +115,9 @@ export default function App() {
                   <button className={view === 'mindmap' ? 'active' : ''} onClick={() => setView('mindmap')}>
                     Mapa Mental
                   </button>
+                  <button className={view === 'diagram' ? 'active' : ''} onClick={() => setView('diagram')}>
+                    Diagrama
+                  </button>
                   <button className={view === 'summary' ? 'active' : ''} onClick={() => setView('summary')}>
                     Resumo
                   </button>
@@ -153,6 +158,7 @@ export default function App() {
           <div className="result-layout">
             <div className="result-main">
               {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} />}
+              {view === 'diagram' && <Diagram code={result.diagram} topic={result.summary.main_topic} />}
               {view === 'summary' && <Summary data={result.summary} files={result.files_processed} />}
             </div>
             <div className="chat-panel">

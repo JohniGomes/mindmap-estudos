@@ -51,6 +51,14 @@ CATEGORIAS DISPONÍVEIS para cada nó:
 - "epidemiology": epidemiologia, prevalência, fatores de risco
 - "detail": detalhes, sub-itens, informações complementares
 
+REGRAS DO DIAGRAMA MERMAID (campo "diagram"):
+- Use flowchart TD (top-down) para visualizar o conteúdo como fluxo clínico
+- Nós com texto conciso (máx 6 palavras), use colchetes: A[texto]
+- Aplique as classes CSS acima conforme a categoria de cada nó
+- Inclua setas com labels quando relevante: A -->|causa| B
+- Máximo 25 nós para não ficar poluído
+- Sempre termine com as linhas classDef
+
 REGRAS DO MAPA MENTAL:
 - Máximo 4 níveis de profundidade
 - IDs únicos: "root", "n1", "n1-1", "n1-2", "n2", "n2-1", etc.
@@ -66,6 +74,7 @@ REGRAS DO RESUMO:
 
 Retorne EXCLUSIVAMENTE um JSON válido no formato:
 {
+  "diagram": "flowchart TD\n    A[Tópico]:::root\n    A --> B[Ramo]:::def\n    ...\n    classDef root fill:#f0faf8,stroke:#428072,color:#2d6b5e,font-weight:bold\n    classDef def fill:#f0f4fa,stroke:#5c7a9e,color:#3d5a7a\n    classDef patho fill:#faf0f0,stroke:#8b5c5c,color:#6b3c3c\n    classDef symp fill:#faf6f0,stroke:#9e7a3a,color:#7a5a1a\n    classDef diag fill:#f0f5fa,stroke:#3a6e9e,color:#1a4e7a\n    classDef treat fill:#f0faf4,stroke:#3a8a5c,color:#1a6a3c\n    classDef nurs fill:#faf0f5,stroke:#9e3a6e,color:#7a1a4e\n    classDef class fill:#f5f0fa,stroke:#6e3a9e,color:#4e1a7a\n    classDef epi fill:#f0f7fa,stroke:#3a7a9e,color:#1a5a7a\n    classDef detail fill:#f9fafb,stroke:#d1d5db,color:#374151",
   "mindmap": {
     "id": "root",
     "label": "Nome do Tópico Principal",
@@ -96,6 +105,7 @@ MAX_PDF_BYTES = 30 * 1024 * 1024
 class ProcessResponse(BaseModel):
     id: str
     mindmap: dict
+    diagram: str
     summary: dict
     files_processed: list[str]
     created_at: str
@@ -155,12 +165,13 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail="Resposta da IA não é um JSON válido.")
 
-    # Salva no Supabase (mindmap serializado como string JSON)
+    # Salva no Supabase
     try:
         sb = get_supabase()
         row = sb.table("mindmaps").insert({
             "topic": result["summary"]["main_topic"],
             "mindmap": json.dumps(result["mindmap"], ensure_ascii=False),
+            "diagram": result.get("diagram", ""),
             "summary": result["summary"],
             "files_processed": processed_names,
         }).execute()
@@ -171,6 +182,7 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     return ProcessResponse(
         id=saved["id"],
         mindmap=result["mindmap"],
+        diagram=result.get("diagram", ""),
         summary=result["summary"],
         files_processed=processed_names,
         created_at=saved["created_at"],
@@ -189,6 +201,8 @@ def get_history():
                     row["mindmap"] = json.loads(row["mindmap"])
                 except Exception:
                     row["mindmap"] = {"id": "root", "label": row.get("topic", ""), "category": "root", "children": []}
+            if "diagram" not in row:
+                row["diagram"] = ""
         return rows.data
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erro ao carregar histórico: {str(e)}")
