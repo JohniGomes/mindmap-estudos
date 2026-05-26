@@ -195,4 +195,8 @@ if static_dir.exists():
 
     @app.get("/{full_path:path}")
     def serve_react(full_path: str):
+        # Serve real files (images, fonts, etc.) if they exist in dist
+        candidate = static_dir / full_path
+        if candidate.exists() and candidate.is_file():
+            return FileResponse(str(candidate))
         return FileResponse(str(static_dir / "index.html"))

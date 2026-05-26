@@ -9,7 +9,7 @@
 
 .upload-container {
   width: 100%;
-  max-width: 520px;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -22,35 +22,36 @@
 
 .hero-photo-wrap {
   position: relative;
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 18px;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 16px;
 }
 
 .hero-photo {
-  width: 96px;
-  height: 96px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--border-accent);
-  box-shadow: 0 0 24px var(--accent-glow);
+  border: 2.5px solid var(--border-accent);
+  box-shadow: 0 0 0 6px rgba(124,58,237,0.08), var(--shadow-md);
 }
 
 .hero-photo-ring {
   position: absolute;
-  inset: -5px;
+  inset: -6px;
   border-radius: 50%;
-  border: 1px solid var(--border-accent);
-  animation: pulse-ring 2.5s ease-in-out infinite;
+  border: 1.5px solid var(--border-accent);
+  opacity: 0.5;
+  animation: pulse-ring 2.8s ease-in-out infinite;
 }
 
 @keyframes pulse-ring {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.04); }
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
 }
 
 .upload-hero h2 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 8px;
@@ -65,26 +66,27 @@
 
 /* Dropzone */
 .dropzone {
-  border: 1px dashed var(--border-accent);
+  border: 1.5px dashed var(--border-accent);
   border-radius: 14px;
-  padding: 36px 24px;
+  padding: 32px 24px;
   text-align: center;
   cursor: pointer;
-  background: var(--accent-dim);
+  background: var(--accent-light);
   transition: all 0.2s;
 }
 
 .dropzone:hover, .dropzone.dragging {
-  background: rgba(192,60,255,0.12);
+  background: #ede9fe;
   border-color: var(--accent);
-  box-shadow: 0 0 24px var(--accent-glow);
+  box-shadow: var(--shadow-md);
 }
 
 .dropzone-icon {
   color: var(--accent);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   display: flex;
   justify-content: center;
+  opacity: 0.7;
 }
 
 .dropzone-title {
@@ -101,10 +103,11 @@
 
 /* File list */
 .file-list {
-  background: var(--bg-card);
+  background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .file-list-header {
@@ -117,6 +120,7 @@
   color: var(--text-muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  background: var(--bg);
 }
 
 .file-item {
@@ -157,14 +161,14 @@
 }
 
 .file-remove:hover {
-  background: rgba(248,113,113,0.15);
+  background: #fee2e2;
   color: var(--red);
 }
 
 /* Error */
 .error-box {
-  background: rgba(248,113,113,0.08);
-  border: 1px solid rgba(248,113,113,0.25);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   color: var(--red);
   border-radius: 8px;
   padding: 10px 14px;
@@ -175,24 +179,25 @@
 .btn-primary {
   width: 100%;
   padding: 13px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   transition: all 0.2s;
-  box-shadow: 0 4px 24px var(--accent-glow);
+  box-shadow: 0 4px 16px rgba(124,58,237,0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: #6d28d9;
   transform: translateY(-1px);
-  box-shadow: 0 6px 32px rgba(192,60,255,0.4);
+  box-shadow: 0 6px 20px rgba(124,58,237,0.35);
 }
 
 .btn-primary:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: not-allowed;
   box-shadow: none;
 }

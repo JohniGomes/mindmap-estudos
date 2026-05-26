@@ -2,108 +2,69 @@
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background: var(--bg);
 }
 
-.history-container {
-  max-width: 1000px;
-  margin: 0 auto;
-}
+.history-container { max-width: 1000px; margin: 0 auto; }
 
 .history-header {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-.history-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.history-header span {
-  font-size: 12px;
-  color: var(--text-dim);
-  letter-spacing: 0.5px;
-}
+.history-header h2 { font-size: 20px; font-weight: 700; color: var(--text); }
+.history-header span { font-size: 12px; color: var(--text-dim); }
 
 .history-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100%;
   min-height: 300px;
   text-align: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.history-empty-icon {
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-
-.history-empty p {
-  font-size: 15px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.history-empty span {
-  font-size: 12px;
-  color: var(--text-dim);
-}
+.history-empty-icon { color: var(--text-dim); margin-bottom: 8px; }
+.history-empty p { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+.history-empty span { font-size: 12px; color: var(--text-dim); }
 
 .history-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .history-card {
-  background: var(--bg-card);
+  background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-shadow: var(--shadow);
   transition: all 0.15s;
 }
 
 .history-card:hover {
-  background: var(--bg-card-hover);
   border-color: var(--border-accent);
-  box-shadow: 0 0 20px var(--accent-glow);
+  box-shadow: var(--shadow-md);
 }
 
-.history-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.history-card-top { display: flex; align-items: center; justify-content: space-between; }
 
 .history-dot {
-  width: 6px;
-  height: 6px;
+  width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 6px var(--accent-glow);
 }
 
-.history-date {
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 0.3px;
-}
+.history-date { font-size: 10px; color: var(--text-dim); }
 
-.history-topic {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.3;
-}
+.history-topic { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.3; }
 
 .history-files {
   font-size: 11px;
@@ -113,11 +74,7 @@
   white-space: nowrap;
 }
 
-.history-points {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.history-points { display: flex; flex-direction: column; gap: 4px; }
 
 .history-points span {
   font-size: 11px;
@@ -127,36 +84,23 @@
   position: relative;
 }
 
-.history-points span::before {
-  content: '›';
-  position: absolute;
-  left: 0;
-  color: var(--accent);
-}
+.history-points span::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
 
-.history-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
+.history-actions { display: flex; gap: 8px; margin-top: 4px; }
 
 .btn-load {
   flex: 1;
   padding: 7px;
-  background: var(--accent-dim);
+  background: var(--accent-light);
   border: 1px solid var(--border-accent);
   color: var(--accent);
   border-radius: 7px;
   font-size: 12px;
   font-weight: 600;
   transition: all 0.15s;
-  letter-spacing: 0.3px;
 }
 
-.btn-load:hover {
-  background: rgba(192,60,255,0.15);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
+.btn-load:hover { background: #ede9fe; box-shadow: var(--shadow-md); }
 
 .btn-delete {
   padding: 7px 10px;
@@ -169,8 +113,4 @@
   transition: all 0.15s;
 }
 
-.btn-delete:hover {
-  background: rgba(248,113,113,0.1);
-  border-color: rgba(248,113,113,0.3);
-  color: var(--red);
-}
+.btn-delete:hover { background: #fee2e2; border-color: #fca5a5; color: var(--red); }
