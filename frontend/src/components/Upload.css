@@ -32,9 +32,9 @@
   height: 160px;
   border-radius: 50%;
   object-fit: cover;
-  object-position: center top;
-  border: 3px solid var(--border-accent);
-  box-shadow: 0 0 0 8px rgba(124,58,237,0.07), var(--shadow-md);
+  object-position: center 15%;
+  border: 3px solid var(--pink);
+  box-shadow: 0 0 0 8px rgba(255,185,179,0.15), var(--shadow-md);
 }
 
 .hero-photo-ring {
@@ -67,17 +67,17 @@
 
 /* Dropzone */
 .dropzone {
-  border: 1.5px dashed var(--border-accent);
+  border: 1.5px dashed var(--pink);
   border-radius: 14px;
   padding: 32px 24px;
   text-align: center;
   cursor: pointer;
-  background: var(--accent-light);
+  background: #fff8f7;
   transition: all 0.2s;
 }
 
 .dropzone:hover, .dropzone.dragging {
-  background: #ede9fe;
+  background: #fff0ee;
   border-color: var(--accent);
   box-shadow: var(--shadow-md);
 }
@@ -188,13 +188,13 @@
   font-weight: 700;
   letter-spacing: 0.3px;
   transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+  box-shadow: 0 4px 16px rgba(66,128,114,0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #6d28d9;
+  background: #356860;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+  box-shadow: 0 6px 20px rgba(66,128,114,0.35);
 }
 
 .btn-primary:disabled {

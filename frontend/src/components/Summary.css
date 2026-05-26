@@ -35,7 +35,7 @@
 
 .summary-copy-btn {
   padding: 7px 14px;
-  border: 1px solid var(--border-accent);
+  border: 1px solid var(--mint);
   background: var(--accent-light);
   color: var(--accent);
   border-radius: 7px;
@@ -47,13 +47,13 @@
 }
 
 .summary-copy-btn:hover {
-  background: #ede9fe;
+  background: #e0f5f1;
   box-shadow: var(--shadow-md);
 }
 
 .key-points-card {
-  background: var(--accent-light);
-  border: 1px solid var(--border-accent);
+  background: #f0faf8;
+  border: 1px solid var(--mint);
   border-radius: 14px;
   padding: 20px;
 }

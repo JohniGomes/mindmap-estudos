@@ -77,7 +77,7 @@
 
 .btn-new {
   padding: 6px 14px;
-  border: 1px solid var(--border-accent);
+  border: 1px solid var(--mint);
   background: var(--accent-light);
   color: var(--accent);
   border-radius: 7px;
@@ -87,7 +87,7 @@
 }
 
 .btn-new:hover {
-  background: #ede9fe;
+  background: #e0f5f1;
   box-shadow: var(--shadow-md);
 }
 

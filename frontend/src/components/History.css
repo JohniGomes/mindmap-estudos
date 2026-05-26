@@ -92,7 +92,7 @@
   flex: 1;
   padding: 7px;
   background: var(--accent-light);
-  border: 1px solid var(--border-accent);
+  border: 1px solid var(--mint);
   color: var(--accent);
   border-radius: 7px;
   font-size: 12px;
@@ -100,7 +100,7 @@
   transition: all 0.15s;
 }
 
-.btn-load:hover { background: #ede9fe; box-shadow: var(--shadow-md); }
+.btn-load:hover { background: #e0f5f1; box-shadow: var(--shadow-md); }
 
 .btn-delete {
   padding: 7px 10px;

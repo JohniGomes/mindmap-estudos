@@ -62,7 +62,7 @@
 
 .chat-suggestions button:hover {
   background: var(--accent-light);
-  border-color: var(--border-accent);
+  border-color: var(--mint);
   color: var(--accent);
 }
 
@@ -80,8 +80,8 @@
 }
 
 .msg-user .msg-bubble {
-  background: var(--accent-light);
-  border: 1px solid var(--border-accent);
+  background: #fff8f7;
+  border: 1px solid var(--pink);
   color: var(--text);
   border-bottom-right-radius: 4px;
 }
@@ -138,8 +138,8 @@
 }
 
 .chat-input:focus {
-  border-color: var(--border-accent);
-  box-shadow: 0 0 0 3px rgba(124,58,237,0.08);
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px rgba(200,255,243,0.4);
 }
 
 .chat-input::placeholder { color: var(--text-dim); }
@@ -147,7 +147,7 @@
 .chat-send {
   padding: 8px 10px;
   background: var(--accent-light);
-  border: 1px solid var(--border-accent);
+  border: 1px solid var(--mint);
   color: var(--accent);
   border-radius: 8px;
   display: flex;
@@ -156,7 +156,7 @@
 }
 
 .chat-send:hover:not(:disabled) {
-  background: #ede9fe;
+  background: #e0f5f1;
   box-shadow: var(--shadow-md);
 }
 
