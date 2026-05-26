@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './Chat.css'
 
 interface Message {
@@ -86,7 +87,11 @@ export default function Chat({ context, topic }: Props) {
 
         {messages.map((m, i) => (
           <div key={i} className={`msg msg-${m.role}`}>
-            <div className="msg-bubble">{m.content}</div>
+            <div className="msg-bubble">
+              {m.role === 'assistant'
+                ? <ReactMarkdown>{m.content}</ReactMarkdown>
+                : m.content}
+            </div>
           </div>
         ))}
 
