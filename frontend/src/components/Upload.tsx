@@ -25,8 +25,7 @@ export default function Upload({ onFiles, error }: Props) {
   function addFiles(files: File[]) {
     setSelected(prev => {
       const names = new Set(prev.map(f => f.name))
-      const unique = files.filter(f => !names.has(f.name))
-      return [...prev, ...unique]
+      return [...prev, ...files.filter(f => !names.has(f.name))]
     })
   }
 
@@ -34,20 +33,18 @@ export default function Upload({ onFiles, error }: Props) {
     setSelected(prev => prev.filter(f => f.name !== name))
   }
 
-  function handleSubmit() {
-    if (selected.length > 0) onFiles(selected)
-  }
-
-  const totalSize = selected.reduce((sum, f) => sum + f.size, 0)
-  const totalSizeMB = (totalSize / 1024 / 1024).toFixed(1)
+  const totalMB = (selected.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1)
 
   return (
     <div className="upload-page">
       <div className="upload-container">
         <div className="upload-hero">
-          <div className="hero-icon">📚</div>
-          <h2>Olá! Vamos criar seu mapa mental?</h2>
-          <p>Faça upload dos PDFs das suas aulas e a IA vai gerar um mapa mental interativo e um resumo completo para você estudar.</p>
+          <div className="hero-photo-wrap">
+            <img src="/thallyta.jpg" alt="Thallyta" className="hero-photo" />
+            <div className="hero-photo-ring" />
+          </div>
+          <h2>Olá, Thallyta</h2>
+          <p>Envie seus PDFs de aula e a IA vai criar um mapa mental interativo e um resumo completo para você estudar.</p>
         </div>
 
         <div
@@ -57,49 +54,43 @@ export default function Upload({ onFiles, error }: Props) {
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
         >
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept=".pdf"
-            onChange={handleChange}
-            style={{ display: 'none' }}
-          />
-          <div className="dropzone-icon">☁️</div>
+          <input ref={inputRef} type="file" multiple accept=".pdf" onChange={handleChange} style={{ display: 'none' }} />
+          <div className="dropzone-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+            </svg>
+          </div>
           <p className="dropzone-title">Arraste seus PDFs aqui</p>
-          <p className="dropzone-sub">ou clique para selecionar</p>
-          <span className="dropzone-badge">Múltiplos arquivos suportados</span>
+          <p className="dropzone-sub">ou clique para selecionar · múltiplos arquivos suportados</p>
         </div>
 
         {selected.length > 0 && (
           <div className="file-list">
             <div className="file-list-header">
-              <span>{selected.length} arquivo{selected.length > 1 ? 's' : ''} selecionado{selected.length > 1 ? 's' : ''}</span>
-              <span className="file-size-total">{totalSizeMB} MB total</span>
+              <span>{selected.length} arquivo{selected.length > 1 ? 's' : ''}</span>
+              <span>{totalMB} MB</span>
             </div>
             {selected.map(f => (
               <div key={f.name} className="file-item">
-                <span className="file-icon">📄</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/>
+                </svg>
                 <span className="file-name">{f.name}</span>
                 <span className="file-size">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                <button className="file-remove" onClick={e => { e.stopPropagation(); removeFile(f.name) }}>×</button>
+                <button className="file-remove" onClick={e => { e.stopPropagation(); removeFile(f.name) }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
               </div>
             ))}
           </div>
         )}
 
-        {error && (
-          <div className="error-box">
-            <span>⚠️</span> {error}
-          </div>
-        )}
+        {error && <div className="error-box">{error}</div>}
 
-        <button
-          className="btn-primary"
-          disabled={selected.length === 0}
-          onClick={handleSubmit}
-        >
-          ✨ Gerar Mapa Mental
+        <button className="btn-primary" disabled={selected.length === 0} onClick={() => onFiles(selected)}>
+          Gerar Mapa Mental
         </button>
       </div>
     </div>

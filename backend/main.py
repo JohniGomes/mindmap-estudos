@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from typing import Literal
 
 app = FastAPI(title="Mapa Mental - Enfermagem")
 
@@ -138,6 +139,48 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         summary=result["summary"],
         files_processed=processed_names,
     )
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    context: str
+    history: list[ChatMessage] = []
+
+
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    system = f"""Você é um assistente especializado em enfermagem, ajudando uma estudante a entender o conteúdo das aulas.
+Responda de forma clara, didática e objetiva. Use exemplos clínicos quando relevante.
+Baseie suas respostas no seguinte conteúdo estudado:
+
+{req.context}
+
+Se a pergunta não estiver relacionada ao conteúdo, responda com base no seu conhecimento geral de enfermagem."""
+
+    messages = [{"role": m.role, "content": m.content} for m in req.history]
+    messages.append({"role": "user", "content": req.message})
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=system,
+            messages=messages,
+        )
+    except anthropic.APIError as e:
+        raise HTTPException(status_code=502, detail=f"Erro na API do Claude: {str(e)}")
+
+    return {"reply": response.content[0].text}
 
 
 @app.get("/api/health")
