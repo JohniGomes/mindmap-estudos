@@ -51,13 +51,31 @@ CATEGORIAS DISPONÍVEIS para cada nó:
 - "epidemiology": epidemiologia, prevalência, fatores de risco
 - "detail": detalhes, sub-itens, informações complementares
 
-REGRAS DO DIAGRAMA MERMAID (campo "diagram"):
-- Use flowchart TD (top-down) para visualizar o conteúdo como fluxo clínico
-- Nós com texto conciso (máx 6 palavras), use colchetes: A[texto]
-- Aplique as classes CSS acima conforme a categoria de cada nó
-- Inclua setas com labels quando relevante: A -->|causa| B
-- Máximo 25 nós para não ficar poluído
-- Sempre termine com as linhas classDef
+REGRAS DO INFOGRÁFICO SVG (campo "diagram"):
+Gere um SVG completo e visualmente rico como um infográfico médico profissional.
+
+ESTRUTURA DO SVG:
+- width="900", height conforme necessário (mínimo 500)
+- Fundo: rect com fill="#faf7f5" cobrindo tudo
+- Título principal no topo: fonte 22px, bold, cor #428072
+- Divida o conteúdo em seções/cards com rect arredondados (rx="12")
+- Cada seção tem: cabeçalho colorido + itens com bullets (círculos SVG)
+- Use as cores por categoria:
+  Definição: #5c7a9e / bg #f0f4fa
+  Fisiopatologia: #8b5c5c / bg #faf0f0
+  Sinais e Sintomas: #9e7a3a / bg #faf6f0
+  Diagnóstico: #3a6e9e / bg #f0f5fa
+  Tratamento: #3a8a5c / bg #f0faf4
+  Cuidados de Enfermagem: #9e3a6e / bg #faf0f5
+  Classificação: #6e3a9e / bg #f5f0fa
+  Epidemiologia: #3a7a9e / bg #f0f7fa
+- Ícones simples como formas SVG (círculos, paths simples) ao lado dos títulos
+- Linhas conectoras entre seções relacionadas (stroke="#e0d8d0", stroke-width="1.5")
+- Texto nos cards: fonte 12px, cor #2e1f1f, line-height via dy="18"
+- Máximo 6 cards para não ficar poluído
+- Todos os estilos inline (sem <style> externo)
+- O SVG deve ser autossuficiente e renderizar direto no browser
+- Escape aspas duplas dentro do JSON com \"
 
 REGRAS DO MAPA MENTAL:
 - Máximo 4 níveis de profundidade
@@ -74,7 +92,7 @@ REGRAS DO RESUMO:
 
 Retorne EXCLUSIVAMENTE um JSON válido no formato:
 {
-  "diagram": "flowchart TD\n    A[Tópico]:::root\n    A --> B[Ramo]:::def\n    ...\n    classDef root fill:#f0faf8,stroke:#428072,color:#2d6b5e,font-weight:bold\n    classDef def fill:#f0f4fa,stroke:#5c7a9e,color:#3d5a7a\n    classDef patho fill:#faf0f0,stroke:#8b5c5c,color:#6b3c3c\n    classDef symp fill:#faf6f0,stroke:#9e7a3a,color:#7a5a1a\n    classDef diag fill:#f0f5fa,stroke:#3a6e9e,color:#1a4e7a\n    classDef treat fill:#f0faf4,stroke:#3a8a5c,color:#1a6a3c\n    classDef nurs fill:#faf0f5,stroke:#9e3a6e,color:#7a1a4e\n    classDef class fill:#f5f0fa,stroke:#6e3a9e,color:#4e1a7a\n    classDef epi fill:#f0f7fa,stroke:#3a7a9e,color:#1a5a7a\n    classDef detail fill:#f9fafb,stroke:#d1d5db,color:#374151",
+  "diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='...' viewBox='...'> ... </svg>",
   "mindmap": {
     "id": "root",
     "label": "Nome do Tópico Principal",
