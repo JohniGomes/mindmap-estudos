@@ -118,7 +118,6 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
             max_tokens=8192,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": content_blocks}],
-            betas=["pdfs-2024-09-25"],
         )
     except anthropic.APIError as e:
         raise HTTPException(status_code=502, detail=f"Erro na API do Claude: {str(e)}")
