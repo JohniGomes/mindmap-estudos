@@ -1,0 +1,129 @@
+.summary-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--gray-50);
+}
+
+.summary-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.summary-files {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
+.summary-copy-btn {
+  padding: 8px 16px;
+  border: 1.5px solid var(--pink-300);
+  background: white;
+  color: var(--pink-600);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.summary-copy-btn:hover {
+  background: var(--pink-50);
+}
+
+/* Key points */
+.key-points-card {
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  border: 1px solid var(--pink-200);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.key-points-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pink-700);
+  margin-bottom: 16px;
+}
+
+.key-points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.key-points-list li {
+  font-size: 14px;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+/* Sections grid */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.section-card {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  padding: 20px;
+  transition: box-shadow 0.15s;
+}
+
+.section-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+}
+
+.section-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pink-600);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pink-100);
+}
+
+.section-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-card ul li {
+  font-size: 13px;
+  color: var(--gray-600);
+  line-height: 1.4;
+  padding-left: 16px;
+  position: relative;
+}
+
+.section-card ul li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--pink-400);
+  font-weight: 700;
+}

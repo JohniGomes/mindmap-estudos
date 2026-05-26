@@ -1,0 +1,86 @@
+.mindmap-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+}
+
+.mindmap-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  background: white;
+  flex-shrink: 0;
+}
+
+.mindmap-topic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.mindmap-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pink-500);
+  flex-shrink: 0;
+}
+
+.mindmap-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mindmap-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  color: var(--gray-600);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.mindmap-actions button:hover {
+  background: var(--pink-50);
+  border-color: var(--pink-300);
+  color: var(--pink-600);
+}
+
+.mindmap-hint {
+  text-align: center;
+  font-size: 11px;
+  color: var(--gray-400);
+  padding: 4px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-100);
+  flex-shrink: 0;
+}
+
+.mindmap-canvas {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.mindmap-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Markmap node text */
+.mindmap-svg .markmap-node > circle {
+  fill: var(--pink-400);
+}
+
+.mindmap-svg .markmap-node > text {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}

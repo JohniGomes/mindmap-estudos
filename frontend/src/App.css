@@ -1,0 +1,150 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 24px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.logo h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--pink-600);
+  line-height: 1;
+}
+
+.logo p {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 2px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--gray-100);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle button {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all 0.15s;
+}
+
+.view-toggle button.active {
+  background: white;
+  color: var(--pink-600);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-secondary {
+  padding: 7px 16px;
+  border: 1.5px solid var(--pink-300);
+  background: white;
+  color: var(--pink-600);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--pink-50);
+}
+
+/* Main */
+.main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading */
+.loading-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-card {
+  text-align: center;
+  padding: 48px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  max-width: 380px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--pink-100);
+  border-top-color: var(--pink-500);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-card h2 {
+  font-size: 20px;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+
+.loading-card p {
+  font-size: 14px;
+  color: var(--gray-500);
+  line-height: 1.5;
+}
+
+.loading-hint {
+  margin-top: 8px;
+  font-size: 12px !important;
+  color: var(--gray-400) !important;
+}
