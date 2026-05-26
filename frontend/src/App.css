@@ -185,6 +185,41 @@
 }
 
 @media (max-width: 767px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .header-inner {
+    height: auto;
+    padding: 8px 0;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .logo h1 {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .logo p {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .view-toggle button {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .btn-new {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
   .result-layout {
     flex-direction: column;
   }

@@ -55,16 +55,46 @@
   flex: 1;
   overflow: auto;
   padding: 24px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .diagram-canvas {
   transition: transform 0.2s;
+  transform-origin: top center;
 }
 
 .diagram-canvas svg {
   border-radius: 12px;
   box-shadow: var(--shadow-md);
-  max-width: 100%;
+  display: block;
+  max-width: none;
+}
+
+@media (max-width: 767px) {
+  .diagram-scroll {
+    padding: 12px;
+  }
+
+  .diagram-canvas {
+    transform: none !important;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .diagram-canvas svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .diagram-toolbar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .diagram-actions {
+    flex-wrap: wrap;
+  }
 }
 
 .diagram-empty {
