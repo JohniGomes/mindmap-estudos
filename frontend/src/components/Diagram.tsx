@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import type { SummaryData } from '../App'
 import './Diagram.css'
 
@@ -10,6 +10,7 @@ export default function Diagram({ summary }: Props) {
   const [svg, setSvg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(1)
 
   useEffect(() => {
@@ -30,7 +31,19 @@ export default function Diagram({ summary }: Props) {
         if (!res.ok) throw new Error(`Erro ${res.status}`)
         return res.text()
       })
-      .then(setSvg)
+      .then(svg => {
+        setSvg(svg)
+        // auto-fit zoom to container width on mobile
+        requestAnimationFrame(() => {
+          const container = scrollRef.current
+          if (!container) return
+          const svgEl = container.querySelector('svg')
+          if (!svgEl) return
+          const svgWidth = parseFloat(svgEl.getAttribute('width') || '900')
+          const available = container.clientWidth - 48
+          if (available < svgWidth) setZoom(available / svgWidth)
+        })
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -65,7 +78,7 @@ export default function Diagram({ summary }: Props) {
         </div>
       </div>
 
-      <div className="diagram-scroll">
+      <div className="diagram-scroll" ref={scrollRef}>
         {loading && (
           <div className="diagram-empty">
             <div className="diagram-spinner" />

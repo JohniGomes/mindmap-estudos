@@ -17,6 +17,8 @@ export interface MindMapNodeData {
 interface Props {
   tree: MindMapNodeData
   topic: string
+  expanded?: boolean
+  onToggleExpand?: () => void
 }
 
 const nodeTypes = { mindmapNode: MindMapNode }
@@ -69,7 +71,7 @@ function buildGraph(root: MindMapNodeData): { nodes: Node[]; edges: Edge[] } {
   return { nodes, edges }
 }
 
-function MindMapInner({ tree, topic }: Props) {
+function MindMapInner({ tree, topic, expanded, onToggleExpand }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [rfInstance, setRfInstance] = useState<any>(null)
@@ -105,6 +107,21 @@ function MindMapInner({ tree, topic }: Props) {
         <div className="mindmap-actions">
           <button onClick={() => rfInstance?.fitView({ padding: 0.15 })}>Centralizar</button>
           <button onClick={handleCopy}>{copied ? 'Copiado!' : 'Copiar'}</button>
+          {onToggleExpand && (
+            <button onClick={onToggleExpand} title={expanded ? 'Recolher' : 'Expandir'}>
+              {expanded ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="4,14 10,14 10,20"/><polyline points="20,10 14,10 14,4"/>
+                  <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+                </svg>
+              ) : (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="15,3 21,3 21,9"/><polyline points="9,21 3,21 3,15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
       <div className="mindmap-hint">Scroll para zoom · Arraste para mover</div>

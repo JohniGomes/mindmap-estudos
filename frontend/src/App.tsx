@@ -35,6 +35,7 @@ export default function App() {
   const [view, setView] = useState<View>('mindmap')
   const [history, setHistory] = useState<Result[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   async function fetchHistory() {
     setHistoryLoading(true)
@@ -154,15 +155,17 @@ export default function App() {
         )}
 
         {result && view !== 'history' && (
-          <div className="result-layout">
+          <div className={`result-layout${expanded ? ' result-expanded' : ''}`}>
             <div className="result-main">
-              {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} />}
+              {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} expanded={expanded} onToggleExpand={() => setExpanded(e => !e)} />}
               {view === 'diagram' && <Diagram summary={result.summary} />}
               {view === 'summary' && <Summary data={result.summary} files={result.files_processed} />}
             </div>
-            <div className="chat-panel">
-              <Chat context={chatContext} topic={result.summary.main_topic} />
-            </div>
+            {!expanded && (
+              <div className="chat-panel">
+                <Chat context={chatContext} topic={result.summary.main_topic} />
+              </div>
+            )}
           </div>
         )}
       </main>
