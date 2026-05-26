@@ -22,23 +22,24 @@
 
 .hero-photo-wrap {
   position: relative;
-  width: 90px;
-  height: 90px;
-  margin: 0 auto 16px;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 20px;
 }
 
 .hero-photo {
-  width: 90px;
-  height: 90px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2.5px solid var(--border-accent);
-  box-shadow: 0 0 0 6px rgba(124,58,237,0.08), var(--shadow-md);
+  object-position: center top;
+  border: 3px solid var(--border-accent);
+  box-shadow: 0 0 0 8px rgba(124,58,237,0.07), var(--shadow-md);
 }
 
 .hero-photo-ring {
   position: absolute;
-  inset: -6px;
+  inset: -8px;
   border-radius: 50%;
   border: 1.5px solid var(--border-accent);
   opacity: 0.5;
