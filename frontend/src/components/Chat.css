@@ -18,6 +18,27 @@
   text-transform: uppercase;
   flex-shrink: 0;
   background: var(--bg);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chat-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 2px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.chat-toggle:hover { color: var(--accent); }
+
+.chat-collapsed {
+  flex-shrink: 0;
 }
 
 .chat-header-dot {

@@ -16,6 +16,7 @@ export default function Chat({ context, topic }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 768)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -65,13 +66,24 @@ export default function Chat({ context, topic }: Props) {
   }
 
   return (
-    <div className="chat">
-      <div className="chat-header">
+    <div className={`chat${collapsed ? ' chat-collapsed' : ''}`}>
+      <div className="chat-header" onClick={() => setCollapsed(c => !c)}>
         <div className="chat-header-dot" />
         <span>Chat sobre o conteúdo</span>
+        <button
+          className="chat-toggle"
+          aria-label={collapsed ? 'Expandir chat' : 'Minimizar chat'}
+          onClick={e => { e.stopPropagation(); setCollapsed(c => !c) }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            {collapsed
+              ? <polyline points="18,15 12,9 6,15" />
+              : <polyline points="6,9 12,15 18,9" />}
+          </svg>
+        </button>
       </div>
 
-      <div className="chat-messages">
+      {!collapsed && <div className="chat-messages">
         {messages.length === 0 && (
           <div className="chat-intro">
             <p>Tire dúvidas sobre <strong>{topic}</strong></p>
@@ -103,9 +115,9 @@ export default function Chat({ context, topic }: Props) {
           </div>
         )}
         <div ref={bottomRef} />
-      </div>
+      </div>}
 
-      <div className="chat-input-area">
+      {!collapsed && <div className="chat-input-area">
         <input
           className="chat-input"
           placeholder="Pergunte sobre o conteúdo..."
@@ -119,7 +131,7 @@ export default function Chat({ context, topic }: Props) {
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/>
           </svg>
         </button>
-      </div>
+      </div>}
     </div>
   )
 }

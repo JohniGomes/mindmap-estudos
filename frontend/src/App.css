@@ -183,3 +183,22 @@
   flex-direction: column;
   background: var(--bg-2);
 }
+
+@media (max-width: 767px) {
+  .result-layout {
+    flex-direction: column;
+  }
+
+  .result-main {
+    min-height: 0;
+    flex: 1;
+  }
+
+  .chat-panel {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow: visible;
+  }
+}
