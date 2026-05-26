@@ -63,19 +63,43 @@
 
 .diagram-canvas svg {
   border-radius: 12px;
-  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.06));
+  box-shadow: var(--shadow-md);
+  max-width: 100%;
 }
 
-.diagram-empty, .diagram-error {
+.diagram-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 300px;
   text-align: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .diagram-empty p { font-size: 14px; color: var(--text-muted); font-weight: 500; }
 .diagram-empty span { font-size: 12px; color: var(--text-dim); }
-.diagram-error { color: var(--red); font-size: 13px; }
+
+.diagram-spinner {
+  width: 36px; height: 36px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.diagram-retry {
+  margin-top: 8px;
+  padding: 7px 16px;
+  background: var(--accent-light);
+  border: 1px solid var(--mint);
+  color: var(--accent);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.diagram-retry:hover { background: #e0f5f1; }

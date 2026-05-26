@@ -21,7 +21,6 @@ export interface SummaryData {
 export interface Result {
   id: string
   mindmap: MindMapNodeData
-  diagram: string
   summary: SummaryData
   files_processed: string[]
   created_at?: string
@@ -158,7 +157,7 @@ export default function App() {
           <div className="result-layout">
             <div className="result-main">
               {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} />}
-              {view === 'diagram' && <Diagram code={result.diagram} topic={result.summary.main_topic} />}
+              {view === 'diagram' && <Diagram summary={result.summary} />}
               {view === 'summary' && <Summary data={result.summary} files={result.files_processed} />}
             </div>
             <div className="chat-panel">

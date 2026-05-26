@@ -51,32 +51,6 @@ CATEGORIAS DISPONÍVEIS para cada nó:
 - "epidemiology": epidemiologia, prevalência, fatores de risco
 - "detail": detalhes, sub-itens, informações complementares
 
-REGRAS DO INFOGRÁFICO SVG (campo "diagram"):
-Gere um SVG completo e visualmente rico como um infográfico médico profissional.
-
-ESTRUTURA DO SVG:
-- width="900", height conforme necessário (mínimo 500)
-- Fundo: rect com fill="#faf7f5" cobrindo tudo
-- Título principal no topo: fonte 22px, bold, cor #428072
-- Divida o conteúdo em seções/cards com rect arredondados (rx="12")
-- Cada seção tem: cabeçalho colorido + itens com bullets (círculos SVG)
-- Use as cores por categoria:
-  Definição: #5c7a9e / bg #f0f4fa
-  Fisiopatologia: #8b5c5c / bg #faf0f0
-  Sinais e Sintomas: #9e7a3a / bg #faf6f0
-  Diagnóstico: #3a6e9e / bg #f0f5fa
-  Tratamento: #3a8a5c / bg #f0faf4
-  Cuidados de Enfermagem: #9e3a6e / bg #faf0f5
-  Classificação: #6e3a9e / bg #f5f0fa
-  Epidemiologia: #3a7a9e / bg #f0f7fa
-- Ícones simples como formas SVG (círculos, paths simples) ao lado dos títulos
-- Linhas conectoras entre seções relacionadas (stroke="#e0d8d0", stroke-width="1.5")
-- Texto nos cards: fonte 12px, cor #2e1f1f, line-height via dy="18"
-- Máximo 6 cards para não ficar poluído
-- Todos os estilos inline (sem <style> externo)
-- O SVG deve ser autossuficiente e renderizar direto no browser
-- Escape aspas duplas dentro do JSON com \"
-
 REGRAS DO MAPA MENTAL:
 - Máximo 4 níveis de profundidade
 - IDs únicos: "root", "n1", "n1-1", "n1-2", "n2", "n2-1", etc.
@@ -92,7 +66,6 @@ REGRAS DO RESUMO:
 
 Retorne EXCLUSIVAMENTE um JSON válido no formato:
 {
-  "diagram": "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='...' viewBox='...'> ... </svg>",
   "mindmap": {
     "id": "root",
     "label": "Nome do Tópico Principal",
@@ -123,7 +96,6 @@ MAX_PDF_BYTES = 30 * 1024 * 1024
 class ProcessResponse(BaseModel):
     id: str
     mindmap: dict
-    diagram: str
     summary: dict
     files_processed: list[str]
     created_at: str
@@ -189,7 +161,6 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         row = sb.table("mindmaps").insert({
             "topic": result["summary"]["main_topic"],
             "mindmap": json.dumps(result["mindmap"], ensure_ascii=False),
-            "diagram": result.get("diagram", ""),
             "summary": result["summary"],
             "files_processed": processed_names,
         }).execute()
@@ -200,7 +171,6 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     return ProcessResponse(
         id=saved["id"],
         mindmap=result["mindmap"],
-        diagram=result.get("diagram", ""),
         summary=result["summary"],
         files_processed=processed_names,
         created_at=saved["created_at"],
@@ -234,6 +204,75 @@ def delete_history(item_id: str):
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erro ao deletar: {str(e)}")
+
+
+SVG_SYSTEM = """Você é um designer especializado em infográficos médicos SVG.
+Gere um SVG completo e visualmente rico como um infográfico médico profissional.
+
+ESTRUTURA OBRIGATÓRIA:
+- width="900", height conforme necessário (mínimo 520)
+- Fundo: <rect width="900" height="..." fill="#faf7f5"/>
+- Título principal no topo: font-size="22" font-weight="bold" fill="#428072"
+- Divida em cards com <rect> arredondados (rx="12")
+- Cada card tem: cabeçalho colorido + itens com bullet (círculo <circle r="3">)
+- Cores por categoria:
+  Definição: header #5c7a9e, bg #f0f4fa
+  Fisiopatologia: header #8b5c5c, bg #faf0f0
+  Sinais/Sintomas: header #9e7a3a, bg #faf6f0
+  Diagnóstico: header #3a6e9e, bg #f0f5fa
+  Tratamento: header #3a8a5c, bg #f0faf4
+  Enfermagem: header #9e3a6e, bg #faf0f5
+  Classificação: header #6e3a9e, bg #f5f0fa
+  Epidemiologia: header #3a7a9e, bg #f0f7fa
+- Ícone simples (path ou circle) ao lado do título de cada card
+- Texto dos itens: font-size="12" fill="#2e1f1f"
+- Máximo 6 cards dispostos em grid 2 ou 3 colunas
+- Todos estilos inline, sem <style> externo
+- Retorne APENAS o SVG, sem markdown, sem explicação, sem ```"""
+
+
+class DiagramRequest(BaseModel):
+    topic: str
+    key_points: list[str]
+    sections: list[dict]
+
+
+@app.post("/api/diagram")
+async def generate_diagram(req: DiagramRequest):
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    content = f"""Tópico: {req.topic}
+
+Pontos-chave:
+{chr(10).join(f'- {p}' for p in req.key_points)}
+
+Seções:
+{chr(10).join(f'{s["title"]}:{chr(10)}{chr(10).join(f"  - {p}" for p in s["points"])}' for s in req.sections)}
+
+Gere o infográfico SVG com base nesse conteúdo de enfermagem."""
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            system=SVG_SYSTEM,
+            messages=[{"role": "user", "content": content}],
+        )
+    except anthropic.APIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    svg = response.content[0].text.strip()
+    # Remove markdown code fences if Claude added them
+    if svg.startswith("```"):
+        svg = re.sub(r"^```(?:svg|xml)?\s*", "", svg)
+        svg = re.sub(r"\s*```$", "", svg.strip())
+
+    from fastapi.responses import Response
+    return Response(content=svg, media_type="image/svg+xml")
 
 
 class ChatMessage(BaseModel):
