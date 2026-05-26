@@ -75,6 +75,18 @@
   font-weight: 600;
 }
 
+.history-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .btn-new {
   padding: 6px 14px;
   border: 1px solid var(--mint);

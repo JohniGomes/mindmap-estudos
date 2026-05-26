@@ -3,11 +3,23 @@ import './History.css'
 
 interface Props {
   items: Result[]
+  loading: boolean
   onLoad: (item: Result) => void
   onDelete: (id: string) => void
 }
 
-export default function History({ items, onLoad, onDelete }: Props) {
+export default function History({ items, loading, onLoad, onDelete }: Props) {
+  if (loading) {
+    return (
+      <div className="history-page">
+        <div className="history-empty">
+          <div className="history-spinner" />
+          <p>Carregando histórico...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (items.length === 0) {
     return (
       <div className="history-page">
@@ -37,7 +49,7 @@ export default function History({ items, onLoad, onDelete }: Props) {
               <div className="history-card-top">
                 <div className="history-dot" />
                 <span className="history-date">
-                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR', {
+                  {item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR', {
                     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
                   }) : ''}
                 </span>

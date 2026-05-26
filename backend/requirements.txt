@@ -3,3 +3,4 @@ uvicorn[standard]==0.32.1
 python-multipart==0.0.12
 anthropic>=0.50.0
 pydantic==2.10.3
+supabase==2.10.0

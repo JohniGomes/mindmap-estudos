@@ -3,6 +3,7 @@ import json
 import re
 import base64
 from pathlib import Path
+from functools import lru_cache
 
 import anthropic
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -11,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Literal
+from supabase import create_client, Client
 
 app = FastAPI(title="Mapa Mental - Enfermagem")
 
@@ -20,6 +22,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@lru_cache(maxsize=1)
+def get_supabase() -> Client:
+    url = os.environ.get("SUPABASE_URL", "")
+    key = os.environ.get("SUPABASE_KEY", "")
+    if not url or not key:
+        raise RuntimeError("SUPABASE_URL ou SUPABASE_KEY não configuradas.")
+    return create_client(url, key)
+
 
 SYSTEM_PROMPT = """Você é um assistente especializado em criar materiais de estudo para estudantes de enfermagem.
 Sua tarefa é analisar o conteúdo de PDFs de aulas e slides de enfermagem e produzir:
@@ -55,13 +67,15 @@ Retorne EXCLUSIVAMENTE um JSON válido no formato:
   }
 }"""
 
-MAX_PDF_BYTES = 30 * 1024 * 1024  # 30 MB por PDF (limite da API Claude)
+MAX_PDF_BYTES = 30 * 1024 * 1024
 
 
 class ProcessResponse(BaseModel):
+    id: str
     mindmap: str
     summary: dict
     files_processed: list[str]
+    created_at: str
 
 
 @app.post("/api/process", response_model=ProcessResponse)
@@ -74,8 +88,6 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY não configurada.")
 
     client = anthropic.Anthropic(api_key=api_key)
-
-    # Monta os documentos para enviar ao Claude nativamente
     content_blocks: list = []
     processed_names = []
 
@@ -84,28 +96,15 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
             raise HTTPException(status_code=400, detail=f"Arquivo '{upload.filename}' não é um PDF.")
 
         pdf_bytes = await upload.read()
-
         if len(pdf_bytes) > MAX_PDF_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail=f"'{upload.filename}' é muito grande (máx 30 MB)."
-            )
+            raise HTTPException(status_code=413, detail=f"'{upload.filename}' é muito grande (máx 30 MB).")
 
         pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
-
-        content_blocks.append({
-            "type": "text",
-            "text": f"Arquivo: {upload.filename}"
-        })
+        content_blocks.append({"type": "text", "text": f"Arquivo: {upload.filename}"})
         content_blocks.append({
             "type": "document",
-            "source": {
-                "type": "base64",
-                "media_type": "application/pdf",
-                "data": pdf_b64,
-            },
+            "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64},
         })
-
         processed_names.append(upload.filename)
 
     content_blocks.append({
@@ -124,7 +123,6 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         raise HTTPException(status_code=502, detail=f"Erro na API do Claude: {str(e)}")
 
     raw = response.content[0].text.strip()
-
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
@@ -134,11 +132,46 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail="Resposta da IA não é um JSON válido.")
 
+    # Salva no Supabase
+    try:
+        sb = get_supabase()
+        row = sb.table("mindmaps").insert({
+            "topic": result["summary"]["main_topic"],
+            "mindmap": result["mindmap"],
+            "summary": result["summary"],
+            "files_processed": processed_names,
+        }).execute()
+        saved = row.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Erro ao salvar no banco: {str(e)}")
+
     return ProcessResponse(
+        id=saved["id"],
         mindmap=result["mindmap"],
         summary=result["summary"],
         files_processed=processed_names,
+        created_at=saved["created_at"],
     )
+
+
+@app.get("/api/history")
+def get_history():
+    try:
+        sb = get_supabase()
+        rows = sb.table("mindmaps").select("*").order("created_at", desc=True).limit(30).execute()
+        return rows.data
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Erro ao carregar histórico: {str(e)}")
+
+
+@app.delete("/api/history/{item_id}")
+def delete_history(item_id: str):
+    try:
+        sb = get_supabase()
+        sb.table("mindmaps").delete().eq("id", item_id).execute()
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Erro ao deletar: {str(e)}")
 
 
 class ChatMessage(BaseModel):
@@ -195,7 +228,6 @@ if static_dir.exists():
 
     @app.get("/{full_path:path}")
     def serve_react(full_path: str):
-        # Serve real files (images, fonts, etc.) if they exist in dist
         candidate = static_dir / full_path
         if candidate.exists() and candidate.is_file():
             return FileResponse(str(candidate))
