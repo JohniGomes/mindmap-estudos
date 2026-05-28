@@ -206,31 +206,68 @@ def delete_history(item_id: str):
         raise HTTPException(status_code=502, detail=f"Erro ao deletar: {str(e)}")
 
 
-SVG_SYSTEM = """Você é um designer especializado em infográficos médicos SVG.
-Gere um SVG completo e visualmente rico como um infográfico médico profissional.
+SVG_SYSTEM = """Você é um designer especializado em infográficos médicos SVG profissionais.
+Gere um SVG usando <foreignObject> para que o texto quebre linha corretamente dentro dos cards.
 
-ESTRUTURA OBRIGATÓRIA:
-- width="900", height conforme necessário (mínimo 520)
-- Fundo: <rect width="900" height="..." fill="#faf7f5"/>
-- Título principal no topo: font-size="22" font-weight="bold" fill="#428072"
-- Divida em cards com <rect> arredondados (rx="12")
-- Cada card tem: cabeçalho colorido + itens com bullet (círculo <circle r="3">)
-- Cores por categoria:
-  Definição: header #5c7a9e, bg #f0f4fa
-  Fisiopatologia: header #8b5c5c, bg #faf0f0
-  Sinais/Sintomas: header #9e7a3a, bg #faf6f0
-  Diagnóstico: header #3a6e9e, bg #f0f5fa
-  Tratamento: header #3a8a5c, bg #f0faf4
-  Enfermagem: header #9e3a6e, bg #faf0f5
-  Classificação: header #6e3a9e, bg #f5f0fa
-  Epidemiologia: header #3a7a9e, bg #f0f7fa
-- Ícone simples (path ou circle) ao lado do título de cada card
-- Texto dos itens: font-size="12" fill="#2e1f1f"
-- Máximo 6 cards dispostos em grid 2 ou 3 colunas
-- TODOS os cards devem ter seu <rect> de fundo completamente preenchido com a cor bg da categoria — incluindo o último card, mesmo que fique sozinho na última linha
-- Se houver número ímpar de cards em grid 2 colunas, o último card deve ter largura total da coluna e fundo preenchido normalmente
-- Todos estilos inline, sem <style> externo
-- Retorne APENAS o SVG, sem markdown, sem explicação, sem ```"""
+REGRAS OBRIGATÓRIAS:
+
+1. DIMENSÕES: width="960". Calcule height com base no conteúdo (mínimo 600).
+
+2. FUNDO geral: <rect width="960" height="TOTAL" fill="#f4f6f9" rx="0"/>
+
+3. CABEÇALHO DO INFOGRÁFICO (topo, y=0, height=80, fill="#428072"):
+   <rect width="960" height="80" fill="#428072"/>
+   Título centralizado: <text x="480" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="white">TÍTULO</text>
+
+4. GRID DE CARDS: 2 colunas. Largura de cada coluna = 440px. Gap = 20px. Margem lateral = 20px.
+   - Coluna 1: x=20
+   - Coluna 2: x=480
+   - Primeira linha de cards: y=100
+
+5. CADA CARD usa <foreignObject> para texto com quebra de linha automática:
+   Estrutura de um card (exemplo y=100, coluna 1):
+
+   <!-- Card background -->
+   <rect x="20" y="100" width="440" height="CARD_HEIGHT" rx="12" fill="COR_BG" stroke="COR_BORDA" stroke-width="1"/>
+
+   <!-- Card header bar -->
+   <rect x="20" y="100" width="440" height="44" rx="12" fill="COR_HEADER"/>
+   <rect x="20" y="120" width="440" height="24" fill="COR_HEADER"/>
+
+   <!-- Card header title -->
+   <text x="44" y="128" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="white">TÍTULO DO CARD</text>
+
+   <!-- Card body via foreignObject -->
+   <foreignObject x="20" y="144" width="440" height="BODY_HEIGHT">
+     <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#2e2e2e;padding:12px 16px;line-height:1.6">
+       <p style="margin:0 0 6px 0;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:COR_HEADER;font-weight:bold">•</span>Texto do item 1</p>
+       <p style="margin:0 0 6px 0;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:COR_HEADER;font-weight:bold">•</span>Texto do item 2</p>
+     </div>
+   </foreignObject>
+
+6. CÁLCULO DE ALTURA DO CARD:
+   - Estime 20px por linha de texto (textos longos ocupam 2 linhas = 40px)
+   - BODY_HEIGHT = soma das alturas dos itens + 24px padding
+   - CARD_HEIGHT = 44 (header) + BODY_HEIGHT + 8 (margem inferior)
+   - Nunca truncar texto — o card deve ser alto o suficiente para todo conteúdo
+
+7. POSICIONAMENTO DE CARDS EM PARES (mesma linha):
+   - Cards na mesma linha devem ter a MESMA altura (use o maior dos dois)
+   - Próxima linha começa em: y_anterior + max_height_da_linha + 20
+
+8. SE NÚMERO ÍMPAR DE CARDS: último card ocupa largura total (x=20, width=920)
+
+9. CORES POR CATEGORIA:
+   Definição:      COR_HEADER=#5c7a9e  COR_BG=#eef2f8  COR_BORDA=#c5d4e8
+   Fisiopatologia: COR_HEADER=#8b5c5c  COR_BG=#f8f0f0  COR_BORDA=#dfc5c5
+   Sintomas:       COR_HEADER=#9e7a3a  COR_BG=#faf5ec  COR_BORDA=#e8d5b0
+   Diagnóstico:    COR_HEADER=#3a6e9e  COR_BG=#eef4fa  COR_BORDA=#b8d0e8
+   Tratamento:     COR_HEADER=#3a8a5c  COR_BG=#eef8f2  COR_BORDA=#b0dcc3
+   Enfermagem:     COR_HEADER=#9e3a6e  COR_BG=#f8eef4  COR_BORDA=#ddb8cf
+   Classificação:  COR_HEADER=#6e3a9e  COR_BG=#f4eef8  COR_BORDA=#c9b8de
+   Epidemiologia:  COR_HEADER=#3a7a9e  COR_BG=#eef4f8  COR_BORDA=#b8d2e0
+
+10. Retorne APENAS o SVG completo, sem markdown, sem explicação, sem ```"""
 
 
 class DiagramRequest(BaseModel):
