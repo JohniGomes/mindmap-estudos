@@ -287,6 +287,7 @@ REGRAS OBRIGATÓRIAS:
    - BODY_HEIGHT = soma das alturas dos itens + 24px padding
    - CARD_HEIGHT = 44 (header) + BODY_HEIGHT + 8 (margem inferior)
    - Nunca truncar texto — o card deve ser alto o suficiente para todo conteúdo
+   - OBRIGATÓRIO: o <div> dentro do <foreignObject> NUNCA pode estar vazio. Todo card DEVE ter ao menos 2 itens com texto real do conteúdo.
 
 7. POSICIONAMENTO DE CARDS EM PARES (mesma linha):
    - Cards na mesma linha devem ter a MESMA altura (use o maior dos dois)

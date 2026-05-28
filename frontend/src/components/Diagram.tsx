@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import type { SummaryData } from '../App'
+import { downloadElementAsPDF } from '../utils/downloadPdf'
 import './Diagram.css'
 
 interface Props {
@@ -10,8 +11,10 @@ interface Props {
 export default function Diagram({ summary, savedSvg }: Props) {
   const [svg, setSvg] = useState<string | null>(savedSvg || null)
   const [loading, setLoading] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(1)
 
   function autoFitZoom() {
@@ -55,30 +58,21 @@ export default function Diagram({ summary, savedSvg }: Props) {
       setSvg(savedSvg)
       autoFitZoom()
     }
-    // Se não há SVG salvo, não gera automaticamente — espera o usuário clicar
   }, [savedSvg])
 
-  function handleDownloadPDF() {
-    if (!svg) return
-    const win = window.open('', '_blank', 'width=1000,height=800')
-    if (!win) { alert('Permita pop-ups para baixar o PDF.'); return }
-    win.document.write(`<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"/>
-<title>${summary.main_topic}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-  h2 { font-size: 18px; color: #428072; margin-bottom: 16px; text-align: center; }
-  .svg-wrap { display: flex; justify-content: center; }
-  .svg-wrap svg { max-width: 100%; height: auto; border-radius: 10px; }
-  @media print { @page { margin: 8mm; size: A4 landscape; } body { padding: 0; } }
-</style></head>
-<body>
-  <h2>${summary.main_topic}</h2>
-  <div class="svg-wrap">${svg}</div>
-  <script>window.addEventListener('load', () => { window.focus(); window.print(); })<\/script>
-</body></html>`)
-    win.document.close()
+  async function handleDownloadPDF() {
+    if (!canvasRef.current) return
+    setPdfLoading(true)
+    // Reseta zoom temporariamente para capturar tamanho real
+    const prevZoom = zoom
+    setZoom(1)
+    await new Promise(r => setTimeout(r, 100))
+    try {
+      await downloadElementAsPDF(canvasRef.current, summary.main_topic, 'landscape')
+    } finally {
+      setZoom(prevZoom)
+      setPdfLoading(false)
+    }
   }
 
   return (
@@ -94,7 +88,9 @@ export default function Diagram({ summary, savedSvg }: Props) {
               <button onClick={() => setZoom(z => Math.min(z + 0.15, 2))}>+ Zoom</button>
               <button onClick={() => setZoom(1)}>Resetar</button>
               <button onClick={() => setZoom(z => Math.max(z - 0.15, 0.3))}>− Zoom</button>
-              <button onClick={handleDownloadPDF}>Baixar PDF</button>
+              <button onClick={handleDownloadPDF} disabled={pdfLoading}>
+                {pdfLoading ? 'Gerando...' : 'Baixar PDF'}
+              </button>
             </>
           )}
         </div>
@@ -128,6 +124,7 @@ export default function Diagram({ summary, savedSvg }: Props) {
         )}
         {svg && !loading && (
           <div
+            ref={canvasRef}
             className="diagram-canvas"
             style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
             dangerouslySetInnerHTML={{ __html: svg }}
