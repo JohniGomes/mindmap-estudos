@@ -138,7 +138,7 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=8192,
+            max_tokens=4096,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": content_blocks}],
         )
@@ -227,6 +227,8 @@ ESTRUTURA OBRIGATÓRIA:
 - Ícone simples (path ou circle) ao lado do título de cada card
 - Texto dos itens: font-size="12" fill="#2e1f1f"
 - Máximo 6 cards dispostos em grid 2 ou 3 colunas
+- TODOS os cards devem ter seu <rect> de fundo completamente preenchido com a cor bg da categoria — incluindo o último card, mesmo que fique sozinho na última linha
+- Se houver número ímpar de cards em grid 2 colunas, o último card deve ter largura total da coluna e fundo preenchido normalmente
 - Todos estilos inline, sem <style> externo
 - Retorne APENAS o SVG, sem markdown, sem explicação, sem ```"""
 
@@ -293,20 +295,28 @@ async def chat(req: ChatRequest):
 
     client = anthropic.Anthropic(api_key=api_key)
 
-    system = f"""Você é um assistente especializado em enfermagem, ajudando uma estudante a entender o conteúdo das aulas.
-Responda de forma clara, didática e objetiva. Use exemplos clínicos quando relevante.
-Baseie suas respostas no seguinte conteúdo estudado:
-
-{req.context}
-
-Se a pergunta não estiver relacionada ao conteúdo, responda com base no seu conhecimento geral de enfermagem."""
+    system = [
+        {
+            "type": "text",
+            "text": "Você é um assistente especializado em enfermagem, ajudando uma estudante a entender o conteúdo das aulas.\nResponda de forma clara, didática e objetiva. Use exemplos clínicos quando relevante.\nBaseie suas respostas no seguinte conteúdo estudado:\n\n",
+        },
+        {
+            "type": "text",
+            "text": req.context,
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": "\n\nSe a pergunta não estiver relacionada ao conteúdo, responda com base no seu conhecimento geral de enfermagem.",
+        },
+    ]
 
     messages = [{"role": m.role, "content": m.content} for m in req.history]
     messages.append({"role": "user", "content": req.message})
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-haiku-4-5",
             max_tokens=1024,
             system=system,
             messages=messages,

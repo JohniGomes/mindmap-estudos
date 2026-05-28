@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import type { SummaryData } from '../App'
+import { printHtml } from '../utils/printPdf'
 import './Diagram.css'
 
 interface Props {
@@ -48,15 +49,15 @@ export default function Diagram({ summary }: Props) {
       .finally(() => setLoading(false))
   }, [])
 
-  async function handleDownload() {
+  function handleDownloadPDF() {
     if (!svg) return
-    const blob = new Blob([svg], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${summary.main_topic}.svg`
-    a.click()
-    URL.revokeObjectURL(url)
+    const encoded = btoa(unescape(encodeURIComponent(svg)))
+    const html = `
+      <div style="text-align:center">
+        <h2 style="font-size:18px;font-weight:700;color:#428072;margin-bottom:16px">${summary.main_topic}</h2>
+        <img src="data:image/svg+xml;base64,${encoded}" style="max-width:100%;height:auto;border-radius:10px"/>
+      </div>`
+    printHtml(html, summary.main_topic)
   }
 
   return (
@@ -72,7 +73,7 @@ export default function Diagram({ summary }: Props) {
               <button onClick={() => setZoom(z => Math.min(z + 0.15, 2))}>+ Zoom</button>
               <button onClick={() => setZoom(1)}>Resetar</button>
               <button onClick={() => setZoom(z => Math.max(z - 0.15, 0.3))}>− Zoom</button>
-              <button onClick={handleDownload}>Baixar SVG</button>
+              <button onClick={handleDownloadPDF}>Baixar PDF</button>
             </>
           )}
         </div>

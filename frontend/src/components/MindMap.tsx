@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { printHtml } from '../utils/printPdf'
 import ReactFlow, {
   Node, Edge, Background, Controls,
   useNodesState, useEdgesState, ReactFlowProvider,
@@ -75,7 +76,6 @@ function MindMapInner({ tree, topic, expanded, onToggleExpand }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [rfInstance, setRfInstance] = useState<any>(null)
-  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const { nodes: n, edges: e } = buildGraph(tree)
@@ -89,12 +89,34 @@ function MindMapInner({ tree, topic, expanded, onToggleExpand }: Props) {
     setTimeout(() => instance.fitView({ padding: 0.15 }), 50)
   }, [])
 
-  async function handleCopy() {
-    const flatten = (n: MindMapNodeData, d = 0): string =>
-      ['  '.repeat(d) + n.label, ...n.children.map(c => flatten(c, d + 1))].join('\n')
-    await navigator.clipboard.writeText(flatten(tree))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  function handleDownloadPDF() {
+    function renderNode(node: MindMapNodeData, depth: number): string {
+      const indent = depth * 20
+      const colors: Record<string, string> = {
+        root: '#428072', definition: '#5c7a9e', pathophysiology: '#8b5c5c',
+        symptoms: '#9e7a3a', diagnosis: '#3a6e9e', treatment: '#3a8a5c',
+        nursing: '#9e3a6e', classification: '#6e3a9e', epidemiology: '#3a7a9e',
+        detail: '#9ca3af',
+      }
+      const color = colors[node.category] ?? '#9ca3af'
+      const fontSize = depth === 0 ? 18 : depth === 1 ? 14 : 12
+      const fontWeight = depth <= 1 ? 700 : 400
+      const children = node.children.map(c => renderNode(c, depth + 1)).join('')
+      return `<div style="margin-left:${indent}px;margin-bottom:${depth === 0 ? 16 : 4}px;display:flex;align-items:flex-start;gap:8px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;margin-top:${fontSize * 0.3}px"></span>
+        <div>
+          <span style="font-size:${fontSize}px;font-weight:${fontWeight};color:#1a1a1a;line-height:1.4">${node.label}</span>
+          ${children}
+        </div>
+      </div>`
+    }
+
+    const html = `
+      <div style="max-width:800px;margin:0 auto">
+        <h2 style="font-size:20px;font-weight:700;color:#428072;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #a8d8cf">${topic}</h2>
+        ${renderNode(tree, 0)}
+      </div>`
+    printHtml(html, topic)
   }
 
   return (
@@ -106,7 +128,7 @@ function MindMapInner({ tree, topic, expanded, onToggleExpand }: Props) {
         </div>
         <div className="mindmap-actions">
           <button onClick={() => rfInstance?.fitView({ padding: 0.15 })}>Centralizar</button>
-          <button onClick={handleCopy}>{copied ? 'Copiado!' : 'Copiar'}</button>
+          <button onClick={handleDownloadPDF}>Baixar PDF</button>
           {onToggleExpand && (
             <button onClick={onToggleExpand} title={expanded ? 'Recolher' : 'Expandir'}>
               {expanded ? (
