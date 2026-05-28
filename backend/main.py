@@ -97,8 +97,40 @@ class ProcessResponse(BaseModel):
     id: str
     mindmap: dict
     summary: dict
+    diagram: str
     files_processed: list[str]
     created_at: str
+
+
+def _build_diagram_content(summary: dict) -> str:
+    sections = summary.get("sections", [])
+    sections_text = "\n".join(
+        f'{s["title"]}:\n' + "\n".join(f'  - {p}' for p in s["points"])
+        for s in sections
+    )
+    return (
+        f'Tópico: {summary["main_topic"]}\n\n'
+        f'Pontos-chave:\n' + "\n".join(f'- {p}' for p in summary.get("key_points", [])) +
+        f'\n\nSeções:\n{sections_text}\n\nGere o infográfico SVG com base nesse conteúdo de enfermagem.'
+    )
+
+
+def _generate_diagram_svg(client: anthropic.Anthropic, summary: dict) -> str:
+    """Gera o SVG do diagrama a partir do resumo. Retorna string vazia em caso de falha."""
+    try:
+        resp = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            system=SVG_SYSTEM,
+            messages=[{"role": "user", "content": _build_diagram_content(summary)}],
+        )
+        svg = resp.content[0].text.strip()
+        if svg.startswith("```"):
+            svg = re.sub(r"^```(?:svg|xml)?\s*", "", svg)
+            svg = re.sub(r"\s*```$", "", svg.strip())
+        return svg
+    except Exception:
+        return ""
 
 
 @app.post("/api/process", response_model=ProcessResponse)
@@ -155,6 +187,9 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail="Resposta da IA não é um JSON válido.")
 
+    # Gera diagrama SVG junto com o processamento
+    diagram_svg = _generate_diagram_svg(client, result["summary"])
+
     # Salva no Supabase
     try:
         sb = get_supabase()
@@ -162,6 +197,7 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
             "topic": result["summary"]["main_topic"],
             "mindmap": json.dumps(result["mindmap"], ensure_ascii=False),
             "summary": result["summary"],
+            "diagram": diagram_svg,
             "files_processed": processed_names,
         }).execute()
         saved = row.data[0]
@@ -172,6 +208,7 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         id=saved["id"],
         mindmap=result["mindmap"],
         summary=result["summary"],
+        diagram=diagram_svg,
         files_processed=processed_names,
         created_at=saved["created_at"],
     )
@@ -189,7 +226,7 @@ def get_history():
                     row["mindmap"] = json.loads(row["mindmap"])
                 except Exception:
                     row["mindmap"] = {"id": "root", "label": row.get("topic", ""), "category": "root", "children": []}
-            if "diagram" not in row:
+            if not row.get("diagram"):
                 row["diagram"] = ""
         return rows.data
     except Exception as e:

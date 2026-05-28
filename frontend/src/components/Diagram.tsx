@@ -1,20 +1,37 @@
 import { useEffect, useState, useRef } from 'react'
 import type { SummaryData } from '../App'
-import { printHtml } from '../utils/printPdf'
 import './Diagram.css'
 
 interface Props {
   summary: SummaryData
+  savedSvg?: string
 }
 
-export default function Diagram({ summary }: Props) {
-  const [svg, setSvg] = useState<string | null>(null)
+export default function Diagram({ summary, savedSvg }: Props) {
+  const [svg, setSvg] = useState<string | null>(savedSvg || null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(1)
 
+  function autoFitZoom() {
+    requestAnimationFrame(() => {
+      const container = scrollRef.current
+      if (!container) return
+      const svgEl = container.querySelector('svg')
+      if (!svgEl) return
+      const svgWidth = parseFloat(svgEl.getAttribute('width') || '960')
+      const available = container.clientWidth - 48
+      if (available < svgWidth) setZoom(available / svgWidth)
+    })
+  }
+
   useEffect(() => {
+    if (savedSvg) {
+      setSvg(savedSvg)
+      autoFitZoom()
+      return
+    }
     if (svg || loading) return
     setLoading(true)
     setError(null)
@@ -32,32 +49,35 @@ export default function Diagram({ summary }: Props) {
         if (!res.ok) throw new Error(`Erro ${res.status}`)
         return res.text()
       })
-      .then(svg => {
-        setSvg(svg)
-        // auto-fit zoom to container width on mobile
-        requestAnimationFrame(() => {
-          const container = scrollRef.current
-          if (!container) return
-          const svgEl = container.querySelector('svg')
-          if (!svgEl) return
-          const svgWidth = parseFloat(svgEl.getAttribute('width') || '900')
-          const available = container.clientWidth - 48
-          if (available < svgWidth) setZoom(available / svgWidth)
-        })
+      .then(data => {
+        setSvg(data)
+        autoFitZoom()
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [savedSvg])
 
   function handleDownloadPDF() {
     if (!svg) return
-    const encoded = btoa(unescape(encodeURIComponent(svg)))
-    const html = `
-      <div style="text-align:center">
-        <h2 style="font-size:18px;font-weight:700;color:#428072;margin-bottom:16px">${summary.main_topic}</h2>
-        <img src="data:image/svg+xml;base64,${encoded}" style="max-width:100%;height:auto;border-radius:10px"/>
-      </div>`
-    printHtml(html, summary.main_topic)
+    const win = window.open('', '_blank', 'width=1000,height=800')
+    if (!win) { alert('Permita pop-ups para baixar o PDF.'); return }
+    win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>${summary.main_topic}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+  h2 { font-size: 18px; color: #428072; margin-bottom: 16px; text-align: center; }
+  .svg-wrap { display: flex; justify-content: center; }
+  .svg-wrap svg { max-width: 100%; height: auto; border-radius: 10px; }
+  @media print { @page { margin: 8mm; size: A4 landscape; } body { padding: 0; } }
+</style></head>
+<body>
+  <h2>${summary.main_topic}</h2>
+  <div class="svg-wrap">${svg}</div>
+  <script>window.addEventListener('load', () => { window.focus(); window.print(); })<\/script>
+</body></html>`)
+    win.document.close()
   }
 
   return (

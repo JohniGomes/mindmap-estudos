@@ -22,6 +22,7 @@ export interface Result {
   id: string
   mindmap: MindMapNodeData
   summary: SummaryData
+  diagram: string
   files_processed: string[]
   created_at?: string
 }
@@ -158,7 +159,7 @@ export default function App() {
           <div className={`result-layout${expanded ? ' result-expanded' : ''}`}>
             <div className="result-main">
               {view === 'mindmap' && <MindMap tree={result.mindmap} topic={result.summary.main_topic} expanded={expanded} onToggleExpand={() => setExpanded(e => !e)} />}
-              {view === 'diagram' && <Diagram summary={result.summary} />}
+              {view === 'diagram' && <Diagram summary={result.summary} savedSvg={result.diagram} />}
               {view === 'summary' && <Summary data={result.summary} files={result.files_processed} />}
             </div>
             {!expanded && (
