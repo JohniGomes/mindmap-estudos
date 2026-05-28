@@ -26,16 +26,9 @@ export default function Diagram({ summary, savedSvg }: Props) {
     })
   }
 
-  useEffect(() => {
-    if (savedSvg) {
-      setSvg(savedSvg)
-      autoFitZoom()
-      return
-    }
-    if (svg || loading) return
+  function fetchDiagram() {
     setLoading(true)
     setError(null)
-
     fetch('/api/diagram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,6 +48,14 @@ export default function Diagram({ summary, savedSvg }: Props) {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    if (savedSvg) {
+      setSvg(savedSvg)
+      autoFitZoom()
+    }
+    // Se não há SVG salvo, não gera automaticamente — espera o usuário clicar
   }, [savedSvg])
 
   function handleDownloadPDF() {
@@ -111,8 +112,17 @@ export default function Diagram({ summary, savedSvg }: Props) {
           <div className="diagram-empty">
             <p style={{ color: 'var(--red)' }}>Erro ao gerar infográfico.</p>
             <span>{error}</span>
-            <button className="diagram-retry" onClick={() => { setSvg(null); setError(null) }}>
+            <button className="diagram-retry" onClick={fetchDiagram}>
               Tentar novamente
+            </button>
+          </div>
+        )}
+        {!svg && !loading && !error && (
+          <div className="diagram-empty">
+            <p>Infográfico não gerado ainda.</p>
+            <span>Este item foi criado antes da geração automática.</span>
+            <button className="diagram-retry" onClick={fetchDiagram}>
+              ✦ Gerar agora
             </button>
           </div>
         )}
