@@ -194,22 +194,29 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=502, detail=f"Resposta da IA não é um JSON válido: {str(e)[:120]}")
 
-    # Gera diagrama SVG junto com o processamento
-    diagram_svg = _generate_diagram_svg(client, result["summary"])
-
-    # Salva no Supabase
+    # Salva no Supabase primeiro (sem diagrama) para garantir que o resultado seja persistido
     try:
         sb = get_supabase()
-        row = sb.table("mindmaps").insert({
+        payload: dict = {
             "topic": result["summary"]["main_topic"],
             "mindmap": json.dumps(result["mindmap"], ensure_ascii=False),
             "summary": result["summary"],
-            "diagram": diagram_svg,
             "files_processed": processed_names,
-        }).execute()
+        }
+        row = sb.table("mindmaps").insert(payload).execute()
         saved = row.data[0]
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Erro ao salvar no banco: {str(e)}")
+
+    # Gera diagrama SVG após salvar (falha silenciosa se der erro)
+    diagram_svg = _generate_diagram_svg(client, result["summary"])
+
+    # Atualiza o registro com o diagrama, se a coluna existir
+    if diagram_svg:
+        try:
+            sb.table("mindmaps").update({"diagram": diagram_svg}).eq("id", saved["id"]).execute()
+        except Exception:
+            pass  # Coluna ainda não existe — sem problema, usuário pode gerar depois
 
     return ProcessResponse(
         id=saved["id"],
