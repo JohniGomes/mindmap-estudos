@@ -170,7 +170,7 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=4096,
+            max_tokens=8192,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": content_blocks}],
         )
@@ -178,14 +178,21 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
         raise HTTPException(status_code=502, detail=f"Erro na API do Claude: {str(e)}")
 
     raw = response.content[0].text.strip()
-    if raw.startswith("```"):
+
+    # Remove markdown code fences se presentes
+    if "```" in raw:
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
-        raw = re.sub(r"\s*```$", "", raw)
+        raw = re.sub(r"\s*```\s*$", "", raw)
+
+    # Extrai o JSON mesmo que haja texto antes/depois
+    match = re.search(r'\{[\s\S]*\}', raw)
+    if match:
+        raw = match.group(0)
 
     try:
         result = json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=502, detail="Resposta da IA não é um JSON válido.")
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"Resposta da IA não é um JSON válido: {str(e)[:120]}")
 
     # Gera diagrama SVG junto com o processamento
     diagram_svg = _generate_diagram_svg(client, result["summary"])
