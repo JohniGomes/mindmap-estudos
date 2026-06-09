@@ -6,6 +6,32 @@ interface Props {
   error: string | null
 }
 
+const ALLOWED_EXTS = new Set([
+  '.pdf', '.docx', '.doc', '.pptx', '.ppt',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+  '.txt', '.md',
+])
+
+const ACCEPT = [
+  '.pdf', '.docx', '.doc', '.pptx', '.ppt',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+  '.txt', '.md',
+].join(',')
+
+function getFileIcon(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (ext === 'pdf') return '📄'
+  if (['docx', 'doc'].includes(ext)) return '📝'
+  if (['pptx', 'ppt'].includes(ext)) return '📊'
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return '🖼️'
+  return '📃'
+}
+
+function isAllowed(file: File) {
+  const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '')
+  return ALLOWED_EXTS.has(ext)
+}
+
 export default function Upload({ onFiles, error }: Props) {
   const [dragging, setDragging] = useState(false)
   const [selected, setSelected] = useState<File[]>([])
@@ -14,12 +40,12 @@ export default function Upload({ onFiles, error }: Props) {
   function handleDrop(e: DragEvent) {
     e.preventDefault()
     setDragging(false)
-    const files = Array.from(e.dataTransfer.files).filter(f => f.name.toLowerCase().endsWith('.pdf'))
+    const files = Array.from(e.dataTransfer.files).filter(isAllowed)
     if (files.length) addFiles(files)
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-    if (e.target.files) addFiles(Array.from(e.target.files))
+    if (e.target.files) addFiles(Array.from(e.target.files).filter(isAllowed))
   }
 
   function addFiles(files: File[]) {
@@ -44,7 +70,7 @@ export default function Upload({ onFiles, error }: Props) {
             <div className="hero-photo-ring" />
           </div>
           <h2>Olá, Thallyta</h2>
-          <p>Envie seus PDFs de aula e a IA vai criar um mapa mental interativo e um resumo completo para você estudar.</p>
+          <p>Envie seus arquivos de aula e a IA vai criar um mapa mental interativo e um resumo completo para você estudar.</p>
         </div>
 
         <div
@@ -54,14 +80,17 @@ export default function Upload({ onFiles, error }: Props) {
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
         >
-          <input ref={inputRef} type="file" multiple accept=".pdf" onChange={handleChange} style={{ display: 'none' }} />
+          <input ref={inputRef} type="file" multiple accept={ACCEPT} onChange={handleChange} style={{ display: 'none' }} />
           <div className="dropzone-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
             </svg>
           </div>
-          <p className="dropzone-title">Arraste seus PDFs aqui</p>
+          <p className="dropzone-title">Arraste seus arquivos aqui</p>
           <p className="dropzone-sub">ou clique para selecionar · múltiplos arquivos suportados</p>
+          <div className="dropzone-formats">
+            <span>PDF</span><span>Word</span><span>PowerPoint</span><span>JPG · PNG</span><span>TXT</span>
+          </div>
         </div>
 
         {selected.length > 0 && (
@@ -72,9 +101,7 @@ export default function Upload({ onFiles, error }: Props) {
             </div>
             {selected.map(f => (
               <div key={f.name} className="file-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/>
-                </svg>
+                <span className="file-type-icon">{getFileIcon(f.name)}</span>
                 <span className="file-name">{f.name}</span>
                 <span className="file-size">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
                 <button className="file-remove" onClick={e => { e.stopPropagation(); removeFile(f.name) }}>

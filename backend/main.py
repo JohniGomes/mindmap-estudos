@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import re
 import base64
@@ -90,7 +91,81 @@ Retorne EXCLUSIVAMENTE um JSON válido no formato:
   }
 }"""
 
-MAX_PDF_BYTES = 30 * 1024 * 1024
+MAX_FILE_BYTES = 30 * 1024 * 1024
+
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".docx", ".doc", ".pptx", ".ppt",
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".txt", ".md",
+}
+
+IMAGE_MEDIA_TYPES = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+
+
+def extract_docx_text(data: bytes) -> str:
+    from docx import Document
+    doc = Document(io.BytesIO(data))
+    parts = []
+    for para in doc.paragraphs:
+        if para.text.strip():
+            parts.append(para.text.strip())
+    for table in doc.tables:
+        for row in table.rows:
+            row_text = " | ".join(c.text.strip() for c in row.cells if c.text.strip())
+            if row_text:
+                parts.append(row_text)
+    return "\n".join(parts)
+
+
+def extract_pptx_text(data: bytes) -> str:
+    from pptx import Presentation
+    prs = Presentation(io.BytesIO(data))
+    parts = []
+    for i, slide in enumerate(prs.slides, 1):
+        slide_texts = []
+        for shape in slide.shapes:
+            if hasattr(shape, "text") and shape.text.strip():
+                slide_texts.append(shape.text.strip())
+        if slide_texts:
+            parts.append(f"[Slide {i}]\n" + "\n".join(slide_texts))
+    return "\n\n".join(parts)
+
+
+def build_content_block(filename: str, ext: str, data: bytes) -> list:
+    """Converte um arquivo em um ou mais blocos de conteúdo para a API do Claude."""
+    b64 = base64.standard_b64encode(data).decode("utf-8")
+
+    if ext == ".pdf":
+        return [
+            {"type": "text", "text": f"Arquivo: {filename}"},
+            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": b64}},
+        ]
+
+    if ext in IMAGE_MEDIA_TYPES:
+        return [
+            {"type": "text", "text": f"Imagem: {filename}"},
+            {"type": "image", "source": {"type": "base64", "media_type": IMAGE_MEDIA_TYPES[ext], "data": b64}},
+        ]
+
+    if ext in (".docx", ".doc"):
+        text = extract_docx_text(data)
+        return [{"type": "text", "text": f"Arquivo Word ({filename}):\n{text}"}]
+
+    if ext in (".pptx", ".ppt"):
+        text = extract_pptx_text(data)
+        return [{"type": "text", "text": f"Apresentação PowerPoint ({filename}):\n{text}"}]
+
+    if ext in (".txt", ".md"):
+        text = data.decode("utf-8", errors="replace")
+        return [{"type": "text", "text": f"Arquivo de texto ({filename}):\n{text}"}]
+
+    return []
 
 
 class ProcessResponse(BaseModel):
@@ -147,19 +222,22 @@ async def process_pdfs(files: list[UploadFile] = File(...)):
     processed_names = []
 
     for upload in files:
-        if not upload.filename.lower().endswith(".pdf"):
-            raise HTTPException(status_code=400, detail=f"Arquivo '{upload.filename}' não é um PDF.")
+        ext = Path(upload.filename).suffix.lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Formato '{ext}' não suportado. Use: PDF, Word, PowerPoint, imagens (JPG/PNG/WEBP) ou TXT.",
+            )
 
-        pdf_bytes = await upload.read()
-        if len(pdf_bytes) > MAX_PDF_BYTES:
+        file_bytes = await upload.read()
+        if len(file_bytes) > MAX_FILE_BYTES:
             raise HTTPException(status_code=413, detail=f"'{upload.filename}' é muito grande (máx 30 MB).")
 
-        pdf_b64 = base64.standard_b64encode(pdf_bytes).decode("utf-8")
-        content_blocks.append({"type": "text", "text": f"Arquivo: {upload.filename}"})
-        content_blocks.append({
-            "type": "document",
-            "source": {"type": "base64", "media_type": "application/pdf", "data": pdf_b64},
-        })
+        blocks = build_content_block(upload.filename, ext, file_bytes)
+        if not blocks:
+            raise HTTPException(status_code=400, detail=f"Não foi possível processar '{upload.filename}'.")
+
+        content_blocks.extend(blocks)
         processed_names.append(upload.filename)
 
     content_blocks.append({

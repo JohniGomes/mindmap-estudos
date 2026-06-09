@@ -102,6 +102,30 @@
   margin-top: 4px;
 }
 
+.dropzone-formats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dropzone-formats span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--mint);
+  border-radius: 4px;
+  padding: 2px 7px;
+  letter-spacing: 0.3px;
+}
+
+.file-type-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
 /* File list */
 .file-list {
   background: var(--bg-2);
