@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { SummaryData } from '../App'
-import { downloadElementAsPDF } from '../utils/downloadPdf'
+import { downloadScrollableAsPDF } from '../utils/downloadPdf'
 import './Summary.css'
 
 interface Props {
@@ -16,7 +16,7 @@ export default function Summary({ data, files }: Props) {
     if (!containerRef.current) return
     setPdfLoading(true)
     try {
-      await downloadElementAsPDF(containerRef.current, data.main_topic, 'portrait')
+      await downloadScrollableAsPDF(containerRef.current, data.main_topic)
     } finally {
       setPdfLoading(false)
     }

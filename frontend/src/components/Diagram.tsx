@@ -61,16 +61,14 @@ export default function Diagram({ summary, savedSvg }: Props) {
   }, [savedSvg])
 
   async function handleDownloadPDF() {
-    if (!canvasRef.current) return
+    // Captura o SVG interno diretamente, sem o wrapper com transform
+    const svgEl = canvasRef.current?.querySelector('svg') as HTMLElement | null
+    const target = svgEl ?? canvasRef.current
+    if (!target) return
     setPdfLoading(true)
-    // Reseta zoom temporariamente para capturar tamanho real
-    const prevZoom = zoom
-    setZoom(1)
-    await new Promise(r => setTimeout(r, 100))
     try {
-      await downloadElementAsPDF(canvasRef.current, summary.main_topic, 'landscape')
+      await downloadElementAsPDF(target, summary.main_topic, 'landscape')
     } finally {
-      setZoom(prevZoom)
       setPdfLoading(false)
     }
   }
