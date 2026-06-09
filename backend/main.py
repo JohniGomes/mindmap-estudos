@@ -186,7 +186,11 @@ def _build_diagram_content(summary: dict) -> str:
     return (
         f'Tópico: {summary["main_topic"]}\n\n'
         f'Pontos-chave:\n' + "\n".join(f'- {p}' for p in summary.get("key_points", [])) +
-        f'\n\nSeções:\n{sections_text}\n\nGere o infográfico SVG com base nesse conteúdo de enfermagem.'
+        f'\n\nSeções:\n{sections_text}\n\n'
+        f'Gere o infográfico SVG educacional e aprofundado conforme as instruções. '
+        f'Para cada categoria relevante (sintomas, tratamento, fisiopatologia, procedimentos, teorias, etc.), '
+        f'escreva EXPLICAÇÕES COMPLETAS de 2 a 4 frases — não apenas tópicos curtos. '
+        f'O objetivo é que uma estudante de enfermagem consiga estudar apenas pelo infográfico.'
     )
 
 
@@ -195,7 +199,7 @@ def _generate_diagram_svg(client: anthropic.Anthropic, summary: dict) -> str:
     try:
         resp = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=4096,
+            max_tokens=8192,
             system=SVG_SYSTEM,
             messages=[{"role": "user", "content": _build_diagram_content(summary)}],
         )
@@ -335,69 +339,81 @@ def delete_history(item_id: str):
         raise HTTPException(status_code=502, detail=f"Erro ao deletar: {str(e)}")
 
 
-SVG_SYSTEM = """Você é um designer especializado em infográficos médicos SVG profissionais.
-Gere um SVG usando <foreignObject> para que o texto quebre linha corretamente dentro dos cards.
+SVG_SYSTEM = """Você é um especialista em enfermagem e designer de materiais educativos em SVG.
+Sua tarefa é gerar um infográfico SVG completo e APROFUNDADO que sirva como guia de estudo autossuficiente.
 
-REGRAS OBRIGATÓRIAS:
+FILOSOFIA DO CONTEÚDO:
+- Cada item deve ser uma EXPLICAÇÃO REAL de 1 a 3 frases — não palavras soltas
+- Explique o MECANISMO, não só o nome (ex: "A febre ocorre porque..." em vez de só "Febre")
+- Para tratamentos: explique a lógica terapêutica (ex: "Administra-se X porque atua em Y, promovendo Z")
+- Para procedimentos: descreva as etapas e o racional clínico
+- Para teorias: explique o conceito e sua aplicação prática na enfermagem
+- Para sintomas: explique por que ocorrem (fisiopatologia do sintoma)
+- O objetivo: uma estudante consegue estudar APENAS pelo infográfico, sem precisar do PDF original
 
-1. DIMENSÕES: width="960". Calcule height com base no conteúdo (mínimo 600).
+ESTRUTURA DO SVG:
 
-2. FUNDO geral: <rect width="960" height="TOTAL" fill="#f4f6f9" rx="0"/>
+1. DIMENSÕES: width="960". Height calculado pelo conteúdo (mínimo 800).
 
-3. CABEÇALHO DO INFOGRÁFICO (topo, y=0, height=80, fill="#428072"):
-   <rect width="960" height="80" fill="#428072"/>
-   Título centralizado: <text x="480" y="48" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="white">TÍTULO</text>
+2. FUNDO: <rect width="960" height="TOTAL" fill="#f4f6f9"/>
 
-4. GRID DE CARDS: 2 colunas. Largura de cada coluna = 440px. Gap = 20px. Margem lateral = 20px.
-   - Coluna 1: x=20
-   - Coluna 2: x=480
-   - Primeira linha de cards: y=100
+3. CABEÇALHO (y=0, height=90):
+   <rect width="960" height="90" fill="#2d6a5f"/>
+   Subtítulo (especialidade): <text x="480" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="rgba(255,255,255,0.75)" letter-spacing="2">ENFERMAGEM PEDIÁTRICA</text>
+   Título principal: <text x="480" y="62" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="white">TÍTULO DO TÓPICO</text>
 
-5. CADA CARD usa <foreignObject> para texto com quebra de linha automática:
-   Estrutura de um card (exemplo y=100, coluna 1):
+4. GRID: 2 colunas, x=20 (col1) e x=500 (col2), largura=440px cada, gap=20px.
+   Primeira linha de cards: y=110.
 
-   <!-- Card background -->
-   <rect x="20" y="100" width="440" height="CARD_HEIGHT" rx="12" fill="COR_BG" stroke="COR_BORDA" stroke-width="1"/>
-
-   <!-- Card header bar -->
-   <rect x="20" y="100" width="440" height="44" rx="12" fill="COR_HEADER"/>
-   <rect x="20" y="120" width="440" height="24" fill="COR_HEADER"/>
-
-   <!-- Card header title -->
-   <text x="44" y="128" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="white">TÍTULO DO CARD</text>
-
-   <!-- Card body via foreignObject -->
-   <foreignObject x="20" y="144" width="440" height="BODY_HEIGHT">
-     <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#2e2e2e;padding:12px 16px;line-height:1.6">
-       <p style="margin:0 0 6px 0;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:COR_HEADER;font-weight:bold">•</span>Texto do item 1</p>
-       <p style="margin:0 0 6px 0;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:COR_HEADER;font-weight:bold">•</span>Texto do item 2</p>
+5. ESTRUTURA DE CADA CARD:
+   <!-- fundo do card -->
+   <rect x="X" y="Y" width="440" height="ALTURA_TOTAL" rx="12" fill="COR_BG" stroke="COR_BORDA" stroke-width="1.5"/>
+   <!-- header colorido -->
+   <rect x="X" y="Y" width="440" height="46" rx="12" fill="COR_HEADER"/>
+   <rect x="X" y="Y+24" width="440" height="22" fill="COR_HEADER"/>
+   <!-- ícone redondo no header -->
+   <circle cx="X+22" cy="Y+23" r="10" fill="rgba(255,255,255,0.2)"/>
+   <text x="X+22" y="Y+28" text-anchor="middle" font-family="Arial" font-size="12" fill="white">●</text>
+   <!-- título do card -->
+   <text x="X+40" y="Y+29" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="white">TÍTULO DO CARD</text>
+   <!-- corpo com texto aprofundado via foreignObject -->
+   <foreignObject x="X" y="Y+46" width="440" height="ALTURA_CORPO">
+     <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#1e1e2e;padding:14px 16px 10px;line-height:1.65">
+       <div style="margin-bottom:10px;padding-left:16px;position:relative">
+         <span style="position:absolute;left:0;top:2px;width:8px;height:8px;background:COR_HEADER;border-radius:50%;display:inline-block"></span>
+         <strong style="color:COR_HEADER;font-size:11px">SUBTÍTULO DO ITEM</strong>
+         <p style="margin:3px 0 0;color:#3a3a4a">Explicação completa de 1 a 3 frases descrevendo o mecanismo, procedimento ou conceito de forma educativa e aprofundada.</p>
+       </div>
+       <div style="margin-bottom:10px;padding-left:16px;position:relative">
+         <span style="position:absolute;left:0;top:2px;width:8px;height:8px;background:COR_HEADER;border-radius:50%;display:inline-block"></span>
+         <strong style="color:COR_HEADER;font-size:11px">SUBTÍTULO DO ITEM 2</strong>
+         <p style="margin:3px 0 0;color:#3a3a4a">Outra explicação completa.</p>
+       </div>
      </div>
    </foreignObject>
 
-6. CÁLCULO DE ALTURA DO CARD:
-   - Estime 20px por linha de texto (textos longos ocupam 2 linhas = 40px)
-   - BODY_HEIGHT = soma das alturas dos itens + 24px padding
-   - CARD_HEIGHT = 44 (header) + BODY_HEIGHT + 8 (margem inferior)
-   - Nunca truncar texto — o card deve ser alto o suficiente para todo conteúdo
-   - OBRIGATÓRIO: o <div> dentro do <foreignObject> NUNCA pode estar vazio. Todo card DEVE ter ao menos 2 itens com texto real do conteúdo.
+6. CÁLCULO DE ALTURA:
+   - Cada item (subtítulo + parágrafo curto): ~55px; parágrafo médio: ~70px; parágrafo longo: ~90px
+   - ALTURA_CORPO = soma dos itens + 24px
+   - ALTURA_TOTAL = 46 + ALTURA_CORPO
+   - Cards no mesmo par têm a MESMA altura (use o maior)
+   - NUNCA deixe foreignObject vazio — todo card tem no mínimo 2 itens explicativos
 
-7. POSICIONAMENTO DE CARDS EM PARES (mesma linha):
-   - Cards na mesma linha devem ter a MESMA altura (use o maior dos dois)
-   - Próxima linha começa em: y_anterior + max_height_da_linha + 20
+7. CATEGORIAS E CORES:
+   Conceito/Definição: COR_HEADER=#4a6fa5  COR_BG=#eef2f8  COR_BORDA=#c0d0e8
+   Fisiopatologia:     COR_HEADER=#7a4040  COR_BG=#faf0f0  COR_BORDA=#d4b0b0
+   Sinais e Sintomas:  COR_HEADER=#8a6820  COR_BG=#fdf6e8  COR_BORDA=#ddc878
+   Diagnóstico:        COR_HEADER=#2d6a9e  COR_BG=#eaf4fb  COR_BORDA=#a0c4df
+   Tratamento:         COR_HEADER=#2d7a50  COR_BG=#edf8f2  COR_BORDA=#90d0b0
+   Procedimentos:      COR_HEADER=#5a3a8e  COR_BG=#f2eefa  COR_BORDA=#bba8d8
+   Teorias/Modelos:    COR_HEADER=#1a6e6e  COR_BG=#eafafc  COR_BORDA=#88cece
+   Cuidados Enfermagem:COR_HEADER=#8e3a60  COR_BG=#faeef4  COR_BORDA=#d8a8bc
+   Epidemiologia:      COR_HEADER=#2a6080  COR_BG=#eaf2f8  COR_BORDA=#90b8cc
+   Classificação:      COR_HEADER=#5e4a1e  COR_BG=#faf6ee  COR_BORDA=#c8b070
 
-8. SE NÚMERO ÍMPAR DE CARDS: último card ocupa largura total (x=20, width=920)
+8. Se número ímpar de cards, o último ocupa largura total: x=20, width=920.
 
-9. CORES POR CATEGORIA:
-   Definição:      COR_HEADER=#5c7a9e  COR_BG=#eef2f8  COR_BORDA=#c5d4e8
-   Fisiopatologia: COR_HEADER=#8b5c5c  COR_BG=#f8f0f0  COR_BORDA=#dfc5c5
-   Sintomas:       COR_HEADER=#9e7a3a  COR_BG=#faf5ec  COR_BORDA=#e8d5b0
-   Diagnóstico:    COR_HEADER=#3a6e9e  COR_BG=#eef4fa  COR_BORDA=#b8d0e8
-   Tratamento:     COR_HEADER=#3a8a5c  COR_BG=#eef8f2  COR_BORDA=#b0dcc3
-   Enfermagem:     COR_HEADER=#9e3a6e  COR_BG=#f8eef4  COR_BORDA=#ddb8cf
-   Classificação:  COR_HEADER=#6e3a9e  COR_BG=#f4eef8  COR_BORDA=#c9b8de
-   Epidemiologia:  COR_HEADER=#3a7a9e  COR_BG=#eef4f8  COR_BORDA=#b8d2e0
-
-10. Retorne APENAS o SVG completo, sem markdown, sem explicação, sem ```"""
+9. Retorne APENAS o SVG completo, sem markdown, sem explicação, sem ```"""
 
 
 class DiagramRequest(BaseModel):
@@ -427,7 +443,7 @@ Gere o infográfico SVG com base nesse conteúdo de enfermagem."""
     try:
         response = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=4096,
+            max_tokens=8192,
             system=SVG_SYSTEM,
             messages=[{"role": "user", "content": content}],
         )
